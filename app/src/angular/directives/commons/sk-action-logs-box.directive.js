@@ -2,12 +2,14 @@
 
 import ActionLogItem from '../../classes/action-log-item.js';
 
-function SkActionLogsBoxDirective($log, $window, ConfigFileService) {
+function SkActionLogsBoxDirective($log, $window, ConfigFileService, CONFIG) {
     'ngInject';
 
     return {
         restrict: 'E',
         scope: {
+            title : "@",
+            maxNotifications : "@",
             callbacks: "="
         },
         link: (scope, element) => {
@@ -15,6 +17,7 @@ function SkActionLogsBoxDirective($log, $window, ConfigFileService) {
              * types: notification, ...
              * actions: delete, ...
              */
+
             scope.configsByType = {
                 notification: {
                     actions: ['delete'],
@@ -26,26 +29,64 @@ function SkActionLogsBoxDirective($log, $window, ConfigFileService) {
             }
 
             let store = ConfigFileService.getStore();
+            
+            
 
-            $scope.actionLogList = [];
+            const filterNotifications = function(){
+                
+                let orderedNotifications = JSON.parse(JSON.stringify(store.actionLogs));
 
-            let a = {
-                "_id": "",
-                "createAt": "2017-12-26T12:42:58.292Z",
-                "subscribtionId": "0",
-                "text": "Success! Created Basic SelfKey Identity",
-                "type": "notification"
+                
+                //change string date to date
+                orderedNotifications = orderedNotifications.map(function(obj){
+                    if(typeof obj.date == "string"){
+                        obj.date = new Date(obj.date);
+                    }
+                    return obj;
+                })
+                //order by date asc
+                orderedNotifications = orderedNotifications.sort(function(a,b){
+                    
+                    if(a.date && b.date){
+                        return a.date.getTime() < b.date.getTime();
+                    }
+                    return false;
+                })
+                
+                if(scope.maxNotifications){
+                    //remove unnececary notifications that are more the maxNotifications
+                    orderedNotifications = orderedNotifications.filter(function(el, index){
+                        if(!el.date){
+                            return false;
+                        }
+                        return (index < parseInt(scope.maxNotifications));
+                    }) 
+                }   
+
+                //add icon title and color to the notifications of the specific type
+                orderedNotifications = orderedNotifications.map(function(obj){
+                    let conf = CONFIG.notificationTypes[obj.type];
+                    if(!conf){
+                        return obj;
+                    }
+                    obj.icon = conf.icon;
+                    obj.title = conf.title;
+                    obj.color = conf.color;
+                    return obj;
+                })
+                
+                
+                scope.actionLogList = orderedNotifications;
             }
 
-            function init () {
-                let actionLogs = store.actionLogs;
 
-                for(let i in actionLogs){
-                    let item = actionLogs[i];
-                    let actionLogItem = new ActionLogItem(item._id, item.type, item.text, item.subscribtionId);
-                    $scope.actionLogList.push(actionLogItem);
-                }
-            }
+
+            filterNotifications();
+
+            scope.$watch(function(){return store.actionLogs.length}, function() {
+                filterNotifications();
+            });
+
         },
         replace: true,
         templateUrl: 'common/directives/sk-action-logs-box.html'

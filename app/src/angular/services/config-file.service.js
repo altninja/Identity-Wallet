@@ -1,7 +1,9 @@
 'use strict';
+import * as async from "async";
 import IdAttributeType from '../classes/id-attribute-type.js';
 import Ico from '../classes/ico.js';
 import ActionLogItem from '../classes/action-log-item.js';
+import IdAttribute from '../classes/id-attribute';
 
 // Actually Local Storage Service
 function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronService, CommonService) {
@@ -22,9 +24,21 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
 
     constructor() {
       ActionLogItem.ConfigFileService = this;
+
+      this.q = async.queue((data, callback) => {
+        let newStore = JSON.parse(data.store);
+
+        ElectronService.saveDataStore(newStore).then(() => {
+          callback(null, newStore);
+        }).catch((err) => {
+          callback(err);
+        });
+      }, 1);
     }
 
     init() {
+      const me = this;
+
       let defer = $q.defer();
 
       if (ElectronService.ipcRenderer) {
@@ -48,6 +62,21 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
       return defer.promise;
     }
 
+
+    saveStore() {
+      const me = this;
+      const defer = $q.defer();
+      const jsonConfig = JSON.stringify(store);
+      me.q.push({ store: jsonConfig }, (err, conf) => {
+        if (err) {
+          return defer.reject(err);
+        }
+        defer.resolve(conf);
+      });
+      
+      return defer.promise;
+    }
+
     save() {
       return ElectronService.saveDataStore(store);
     }
@@ -56,6 +85,15 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
       let defer = $q.defer();
       ElectronService.readDataStore().then((data) => {
         store = data;
+
+        for (let i in store.idAttributes) {
+          let idAttribute = new IdAttribute()
+          idAttribute.setData(store.idAttributes[i]);
+          store.idAttributes[i] = idAttribute;
+        }
+
+        console.log(">>>>> STORE LOADED >>>>", store);
+
         defer.resolve(store);
       }).catch((error) => {
         // TODO
@@ -98,25 +136,25 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
     }
 
     findIdAttributeItemByKeyAndAdditions(key, additions) {
-      if(!store.idAttributes[key]) { return null; }
-      
+      if (!store.idAttributes[key]) { return null; }
+
       let result = [];
 
       let idAttribute = store.idAttributes[key];
       let items = idAttribute.items;
 
-      for(let i in items){
+      for (let i in items) {
         let shouldAdd = true;
         let item = items[i];
 
-        for(let j in additions){
-          if(!item.addition[j] || item.addition[j] !== additions[j]){
+        for (let j in additions) {
+          if (!item.addition[j] || item.addition[j] !== additions[j]) {
             shouldAdd = false;
             break;
           }
         }
 
-        if(shouldAdd){
+        if (shouldAdd) {
           result.push(item);
         }
       }
@@ -125,7 +163,7 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
     }
 
     findIdAttributeItemByKeyAndId(key, id) {
-      if(!store.idAttributes[key] || !store.idAttributes[key].items[id]) { return null; }
+      if (!store.idAttributes[key] || !store.idAttributes[key].items[id]) { return null; }
       return store.idAttributes[key].items[id];
     }
 
@@ -190,65 +228,3 @@ function ConfigFileService($rootScope, $log, $q, $timeout, CONFIG, ElectronServi
 }
 
 export default ConfigFileService;
-
-
-
-
-//
-
-
-
-
-
-let idAttributes = {
-  "__subcategory": {
-    subcategory: "Telephone Number",
-    type: "Static Data",
-    category: "Global Attribute",
-    defaultItemId: "___id",
-    items: {
-      "___id": {
-        _id: "",
-        value: "+995 551 949414",
-        meta: {
-          subcategory: "Telephone Number",
-          type: "Static Data",
-          category: "Global Attribute"
-        }
-      }
-    }
-  }
-}
-
-let a = {
-  type: "Static Data",
-  category: "Global Attribute",
-  subcategory: "Telephone Number",
-
-  defaultId: "___id",
-
-  items: {
-    "___id": {
-      _id: "",
-      value: "+995 551 949414"
-    }
-  }
-}
-
-let b = {
-  type: "Static Data",
-  category: "Global Attribute",
-  subcategory: "Document",
-
-  defaultId: "",
-
-  items: {
-    "___id": {
-      _id: "",
-      contentType: "",
-      size: "",
-      name: "",
-      path: "+995 551 949414"
-    }
-  }
-}

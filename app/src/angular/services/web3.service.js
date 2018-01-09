@@ -5,6 +5,9 @@ import Token from '../classes/token';
 import EthUtils from '../classes/eth-utils';
 import EthUnits from '../classes/eth-units';
 
+import * as async from "async";
+import { setTimeout } from "timers";
+
 import Web3 from 'web3';
 
 function dec2hexString(dec) {
@@ -21,7 +24,7 @@ function Web3Service($rootScope, $window, $q, $timeout, $log, $http, $httpParamS
   /**
    * 
    */
-  const REQUEST_INTERVAL_DELAY = 1000;
+  const REQUEST_INTERVAL_DELAY = 500;
 
   /**
    * 
@@ -78,6 +81,16 @@ function Web3Service($rootScope, $window, $q, $timeout, $log, $http, $httpParamS
       Token.$q = $q;
 
       Wallet.Web3Service = this;
+
+      Web3Service.q = async.queue((data, callback) => {
+        let promise = Web3Service.web3.eth[data.method].apply(this, data.args);
+
+        $timeout(()=>{
+          callback(promise);
+        }, REQUEST_INTERVAL_DELAY);
+        
+      }, 1);
+
     }
 
     getBalance(addressHex) {
@@ -101,12 +114,10 @@ function Web3Service($rootScope, $window, $q, $timeout, $log, $http, $httpParamS
     getEstimateGas(fromAddressHex, toAddressHex, amountHex) {
       let defer = $q.defer();
 
-      //let amountHex = dec2hexString(amount); //"0x429d069189e0000";
-
       let args = {
         "from": fromAddressHex,
         "to": toAddressHex,
-        "value": "0x429d069189e0000"
+        "value": amountHex
       }
 
       // wei
@@ -163,39 +174,15 @@ function Web3Service($rootScope, $window, $q, $timeout, $log, $http, $httpParamS
         defer.resolve(response)
       }).catch((error) => {
         $log.error("error", error);
-        defer.reject($rootScope.buildErrorObject("ERR_HTTP_CONNECTION", error));
+        defer.reject(error);
       });
     }
 
     static waitForTicket(defer, method, args) {
-      let ticketId = CommonService.generateId();
-
-      requestQueue.push({ ticketId: ticketId, time: new Date().getTime() + REQUEST_INTERVAL_DELAY * requestQueue.length });
-
-      let interval = $interval(() => {
-
-        for (let i in requestQueue) {
-          if (requestQueue[i].ticketId === ticketId && requestQueue[i].time <= new Date().getTime()) {
-
-            try {
-              let promise = Web3Service.web3.eth[method].apply(this, args);
-              Web3Service.handlePromise(defer, promise);
-
-              $log.info("Request:", method, args, "sent at", new Date().getTime());
-            } catch (e) {
-              $log.error(e);
-            } finally {
-              requestQueue.splice(0, 1);
-              $interval.cancel(interval);
-            }
-
-            break;
-          }
-        }
-
-      }, 200);
+      Web3Service.q.push({ method: method, args: args }, (promise) => {
+        Web3Service.handlePromise(defer, promise);
+      });
     }
-
   };
 
   return new Web3Service();

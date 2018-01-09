@@ -5,7 +5,7 @@ import $ from 'jquery';
 import Wallet from '../classes/wallet';
 import Token from '../classes/token';
 
-function AppRun($rootScope, $log, $timeout, $interval, $state, $mdDialog, DICTIONARY, CONFIG, ElectronService, ConfigFileService) {
+function AppRun($rootScope, $log, $timeout, $interval, $state, $mdDialog, DICTIONARY, CONFIG, ElectronService, ConfigFileService, Web3Service) {
     'ngInject';
 
     $rootScope.selectedLanguage = "en";
@@ -73,7 +73,7 @@ function AppRun($rootScope, $log, $timeout, $interval, $state, $mdDialog, DICTIO
         ElectronService.closeApp();
     }
 
-    $rootScope.openSendTokenDialog = (event, token) => {
+    $rootScope.openSendTokenDialog = (event, symbol) => {
         return $mdDialog.show({
             controller: 'SendTokenDialogController',
             templateUrl: 'common/dialogs/send-token.html',
@@ -81,10 +81,10 @@ function AppRun($rootScope, $log, $timeout, $interval, $state, $mdDialog, DICTIO
             targetEvent: event,
             clickOutsideToClose: false,
             fullscreen: true,
+            escapeToClose: false,
             locals: {
                 args: {
-                    token: token,
-                    publicKeyHex: $rootScope.wallet.getPublicKeyHex()
+                    symbol: symbol
                 }
             }
         });
@@ -154,6 +154,11 @@ function AppRun($rootScope, $log, $timeout, $interval, $state, $mdDialog, DICTIO
     });
 
     ElectronService.analytics('app-start', new Date().toISOString());
+
+    // test account
+    //ElectronService.importEtherPrivateKey('0xf48194b05b5f927d392d6bd95da255f71ad486a6e5738c50fba472ad16b77fe1');
+
+    window.Web3Service = Web3Service;
 }
 
 export default AppRun;

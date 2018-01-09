@@ -64,6 +64,9 @@ angular.module('kyc-wallet').constant('DICTIONARY', appDictionaryConstant);
 import appEventsConstant from './angular/constants/app.events.constant';
 angular.module('kyc-wallet').constant('EVENTS', appEventsConstant);
 
+import countriesConstant from './angular/constants/countries';
+angular.module('kyc-wallet').constant('countries', countriesConstant);
+
 /**
  * filters
  */
@@ -161,9 +164,6 @@ angular.module('kyc-wallet').directive('skWalletHistoryItem', SkWalletHistoryIte
 
 import SkRemindersBoxDirective from './angular/directives/commons/sk-reminders-box.directive';
 angular.module('kyc-wallet').directive('skRemindersBox', SkRemindersBoxDirective);
-
-import SkAlertsBoxDirective from './angular/directives/commons/sk-alerts-box.directive';
-angular.module('kyc-wallet').directive('skAlertsBox', SkAlertsBoxDirective);
 
 import SkWalletGeneralInfoBoxDirective from './angular/directives/commons/sk-wallet-general-info-box.directive';
 angular.module('kyc-wallet').directive('skWalletGeneralInfoBox', SkWalletGeneralInfoBoxDirective);
