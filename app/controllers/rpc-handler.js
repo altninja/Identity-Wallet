@@ -348,24 +348,28 @@ module.exports = function (app) {
                 const filePathToPreview = path.join(documentsDirectoryPath, data.name);
 
                 try{
-                    fsm.appendFileSync(documentsDirectoryPath + "/" + data.name, new Buffer(data.buffer));
+                    fsm.appendFileSync(filePathToPreview, new Buffer(data.buffer));
                 }catch(e){
+                    app.log.warn(e);
                     console.log(e);
                     return app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
                 }
 
+                /*
                 let win = null;
 
                 const config = {
                     width: 800,
                     height: 600,
                     protocol: 'file:',
-                    slashes: true
+                    slashes: true,
+                    //allowDisplayingInsecureContent: true,
+                    //allowRunningInsecureContent: true
                 };
 
                 if(data.mimeType === 'application/pdf'){
                     win = new PDFWindow(config);
-                    win.addSupport(app.win);
+                    PDFWindow.addSupport(app.win)
                 }else{
                     win = new electron.BrowserWindow(config);
                 }
@@ -376,17 +380,22 @@ module.exports = function (app) {
                 });
 
                 app.log.warn(filePathToPreview);
+                */
 
                 //win.loadURL(filePathToPreview);
-                win.loadURL(`file://${filePathToPreview}`)
+                //win.loadURL(`file://${filePathToPreview}`)
+
+                shell.openExternal(`file://${filePathToPreview}`);
 
                 app.win.webContents.send(RPC_METHOD, actionId, actionName, null, null);
             }).catch((error) => {
+                app.log.warn(error);
                 console.log(error);
                 app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
             });
 
         } catch (e) {
+            app.log.warn(e);
             console.log(e);
             app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
         }
