@@ -1,0 +1,17 @@
+md-dialog.add-edit-static-data(aria-lable="{{idAttributeType}}")
+    .content-wrapper.sk-box
+        .content(ng-if="idAttributeType == 'physical_address' || idAttributeType == 'work_place'", ng-include="'common/dialogs/id-attributes/forms/address.html'")
+        .content(ng-if="idAttributeType == 'nationality' || idAttributeType == 'country_of_residency'", ng-include="'common/dialogs/id-attributes/forms/nationality.html'")
+        .content(ng-if="idAttributeType == 'birthdate'", ng-include="'common/dialogs/id-attributes/forms/birth-date.html'")
+
+        .content(layout="column",
+        ng-if="idAttributeType !== 'physical_address' && idAttributeType !== 'work_place' && idAttributeType !== 'country_of_residency' && idAttributeType !== 'nationality' && idAttributeType !== 'birthdate'")
+            md-input-container.sk-input-box.sk-input-non-floating
+                label {{$root.DICTIONARY[idAttributeType]}}
+                input(name="input", type="text", ng-model="input", ng-change="showErrorToast(input)")
+
+    .actions-wrapper
+        md-button.outline-gray(ng-click="close($event)")
+            span.primary cancel
+        md-button.blue(ng-click="save($event)", ng-disabled="input.length == 0")
+            span.primary save

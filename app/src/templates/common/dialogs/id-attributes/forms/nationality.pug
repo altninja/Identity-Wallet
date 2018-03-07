@@ -1,0 +1,5 @@
+form.nationality-content(layout="column", name="nationalityForm")
+    md-input-container.sk-input-box.sk-input-non-floating
+        label Nationality
+        md-select.sk-select(name="nationality", ng-model="nationality", ng-required="true")
+            md-option(ng-value="item.name", ng-repeat="(key, item) in countryList") {{item.name}}
