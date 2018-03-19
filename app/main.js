@@ -10,10 +10,15 @@ const { Menu, Tray, autoUpdater } = require('electron');
 const config = buildConfig(electron);
 
 const log = require('electron-log');
-log.transports.file.appName = electron.app.getName();
-log.transports.console.level = 'verbose';
+
+log.transports.file.level = true;
+log.transports.console.level = true;
+
+log.transports.console.level = 'info';
 
 log.info('starting: ' + electron.app.getName());
+
+log.info({hello: 'test'});
 
 const userDataDirectoryPath = electron.app.getPath('userData');
 const walletsDirectoryPath = path.resolve(userDataDirectoryPath, 'wallets');
@@ -66,7 +71,7 @@ if (!handleSquirrelEvent()) {
  */
 function onReady(app) {
 	return function () {
-        app.log.info('onReady');
+        log.info('onReady');
 		app.config.userDataPath = electron.app.getPath('userData');
 
 		const CMCService = require('./controllers/cmc-service')(app);
@@ -121,12 +126,12 @@ function onReady(app) {
 		}));
 
 		if (app.config.app.debug) {
-            app.log.info('app is running in debug mode');
+            log.info('app is running in debug mode');
 			app.win.webContents.openDevTools();
 		}
 
 		app.win.on('closed', () => {
-            app.log.info('app closed');
+            log.info('app closed');
 			app.win = null;
 		});
 
@@ -141,6 +146,7 @@ function onReady(app) {
         */
 
 		app.win.webContents.on('did-finish-load', () => {
+			log.info('did-finish-load');
             app.win.webContents.send('APP_START_LOADING');
             electron.app.sqlLiteService.init().then(() => {
                 //start update cmc data
@@ -148,10 +154,13 @@ function onReady(app) {
                 electron.app.airtableService.loadIdAttributeTypes();
                 app.win.webContents.send('APP_SUCCESS_LOADING');
             }).catch((error) => {
-                // TODO log error in file
-                app.log.error(error);
+                log.error(error);
                 app.win.webContents.send('APP_FAILED_LOADING');
             });
+		});
+
+		app.win.webContents.on('did-fail-load', () => {
+            log.error('did-fail-load');
 		});
 
 		/**
@@ -186,7 +195,7 @@ function onReady(app) {
 
         // TODO - check
 		electron.ipcMain.on('ON_CONFIG_CHANGE', (event, userConfig) => {
-            app.log.info('ON_CONFIG_CHANGE');
+            log.info('ON_CONFIG_CHANGE');
 			app.config.user = userConfig;
 		});
 
@@ -199,6 +208,7 @@ function onReady(app) {
 }
 
 function onActivate(app) {
+	log.info("onActivatet");
 	return function () {
 		if (app.win === null) {
 			onReady(app);
@@ -272,6 +282,8 @@ function createKeystoreFolder () {
  *
  */
 function handleSquirrelEvent() {
+	log.info("started handleSquirrelEvent");
+
 	if (process.argv.length === 1) {
 		return false;
 	}
@@ -330,6 +342,7 @@ function handleSquirrelEvent() {
 			electron.app.quit();
 			return true;
 	}
+	log.info("end handleSquirrelEvent");
 }
 
 /**

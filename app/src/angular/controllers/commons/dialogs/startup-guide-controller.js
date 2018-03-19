@@ -1,7 +1,11 @@
-function StartupGuideDialogController($rootScope, $scope, $log, $q, $mdDialog, $state, SqlLiteService) {
+'use strict';
+
+function StartupGuideDialogController($rootScope, $scope, $log, $q, $mdDialog, $state, $transitions, SqlLiteService) {
     'ngInject'
 
     $log.info('StartupGuideDialogController');
+
+    $scope.isLoading = false;
 
     let guideSettings = SqlLiteService.getGuideSettings();
     guideSettings.guideShown = true;
@@ -13,7 +17,7 @@ function StartupGuideDialogController($rootScope, $scope, $log, $q, $mdDialog, $
     }
 
     $scope.goToWalletSetup = () => {
-        $state.go('guest.welcome');
+        $scope.isLoading = true;
         $mdDialog.hide();
     }
 };
