@@ -24,7 +24,7 @@ before_install:
 - gcloud auth activate-service-account --key-file client-secret.json
 before_script:
 - npm run make
-- zip -r selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
+- zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
 script:
 - npm run test
 # Deploy the app
