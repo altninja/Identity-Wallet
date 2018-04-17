@@ -16,14 +16,16 @@ before_install:
 before_script:
 - npm run make
 script:
-    - npm run test
-    - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
+- npm run test
+- zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
 deploy:
-  provider: gae
-    keyfile: client-secret.json
-    project: kycchain-master
-    on:
-      branch: travis-automated-deployment
-
-
-
+  provider: gcs
+  access_key_id: GOOGUYHHHUMEQ5GSNOWG
+  secret_access_key:
+    secure: E3feoczgnvkkhX4VlvoZEykiuGlAzFFJ8yOdFVeQoYEmLAc/Vre3vo6ou/aLTYdCXQrDu7vUQSjsvQq6+hyiE4egDKeaBIuELDUaqHAXZo8giLlv4S5cUKsdNXiuR3NaaQRMasl3Swj6kZ0GXg7tIR/l1gJS6J9MSXTyJYn69pkFhg6g8XdmoYKA6/vZIby1DUr02Lj1prRLtx/7uGFIQYXqDPb8ovS6zsD0ugo1SDx7P+lxZVv5a5+aB8jkwqnNafE8fn7DNJALZ9OaQDdCYcak3spZqYtd8mDDxZuiOjmZOFYOPhV3EUvJOC2IEAhzovjB/NgWdNv3//142cbnwFLhvw6CgmDPQ+LASI1ucy+NVw3yb0OO3im+kWWaLs0qJ/wqVSyhyD7Oh/yqC/B20sfSDX9mi+G9Wd/HioIjBZxJ4pumBk0ANDSXpK0Hsx+vPQPErsM2UZDy8i16w5UYMWOY/BjhKUHi1T/JiR//A+xfOQ1+PHDvcaAGjaV4yQmRFFIH8UtaBWiUlF/vylNtN6bP/G2hyDMu7HpyIpW2mkWc0oIlkyeSEsZ4MB2Wz+2s72Ff1VZg6YSOnDYLuVr3FITtZ/Pekvg3o3Vt9ph7sCEI7yFrcOKnwpL0nXS3zofnw4NC3ZS1QLIksEPhHT51qjhy31gRoo9s8TkwIq4nCn8=
+  bucket: selfkey-builds
+  skip_cleanup: true
+  local-dir: out/selfkey-identity-wallet-darwin-x64.zip
+  on:
+    branch: travis-automated-deployment
+  acl: public-read
