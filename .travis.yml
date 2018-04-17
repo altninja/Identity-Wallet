@@ -15,15 +15,11 @@ before_install:
 - npm i -g electron-packager
 before_script:
 - npm run make
-- zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
-script: npm run test
+script:
+    - npm run test
+    - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
 deploy:
-  - provider: gae
-    keyfile: client-secret.json
-    project: kycchain-master
-    on:
-      branch: dev
-  - provider: gae
+  provider: gae
     keyfile: client-secret.json
     project: kycchain-master
     on:
