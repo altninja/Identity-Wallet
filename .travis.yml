@@ -16,9 +16,18 @@ before_install:
 before_script:
 - npm run make
 - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
-script:
-- npm run test
+script: npm run test
 deploy:
-  provider: gae
-  keyfile: client-secret.json
-  project: kycchain-master
+  - provider: gae
+    keyfile: client-secret.json
+    project: kycchain-master
+    on:
+      branch: dev
+  - provider: gae
+    keyfile: client-secret.json
+    project: kycchain-master
+    on:
+      branch: travis-automated-deployment
+
+
+
