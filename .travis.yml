@@ -16,14 +16,14 @@ before_script:
 - npm run make
 deploy:
   provider: gcs
-  on:
-    branch: travis-automated-deployment
+  #on:
+  #  branch: travis-automated-deployment
   access_key_id: GOOGUYHHHUMEQ5GSNOWG
   secret_access_key:
     secure: i93rYCZtgyIBWO1PsLqqMfEIHP6swd56a+Nx8tdc8POBaxH2iIrJOPqnSijX9ScWudm81EFyl2Q3Fca9vxT47CA+tYj1JDnSyghz8MQdFrsP1IDmIjZAdqpOanKZRpAJ/AOYdD5yKJmtYzYQb97P9zYsuCic7JUAjGgnKAj0Qp6IT3pqMJ964rBAfas2XWIBtxAbBUCvU9kCNXk6DDjXxtd6kSxedfbYNeieIBhNIR+lQtRcj/kI/60YC66iGtgHPdX9c/aVi+N9K1zsNk2jBwLGPoDZwybV0Xjby+KJEUmtHAJ/KmkiMsv7fRQzTwLioRArYubWC2kI/st7xo9qyaR2VzLS+t3XqEYO2BQbiqQGlAyGDyJAqJD0d9IXGWpLAGomxO2qmRbU5q1+ox1C5gsAm5ICFyy+Z6TFzM2OQ7aEMzpzKkKvQwXX/9nYl2WvXHRO2P9cRmWweBybY6xILgYru/LoJheo5IsYd86b9STbCN6gvObkhym6X5WWbuv0y7HzhpDewZ2XXe+OG5biTX+dNV3+3Jyb0pTJWISwldgbL1Rn5KOEuFc5E0U60MlNzMNJxLfCZ1cF2B6dlpFVI/LJNQltLXUwU+fZAXDbs/nENxOz6IbHxvkoA4tZPg/13douujTD1sEmup2G2FITeQeQXz4tDkYqRemLKHqF7RU=
   bucket: selfkey-builds
   skip_cleanup: true
   #acl: public-read
-  local-dir: out
+  #local-dir: out
 
 
