@@ -9,23 +9,18 @@ notifications:
   slack:
     secure: fZJNvR4gMUki9/UcaaXYf76JxsdvYV7X15wzkIdQU42qboFG8jvlEiKEr7WP4h3WShJEfG/l70YoSvzO+e3K7vJ+bdpNnvcvgChVZosqVLKmv/jipjmFEdYS11pVvaWPdTet04zmYqrB24waAsaeMt1hMUSAOSuFwvcoYd01fo2guzoGwc+2NkuZTRrGkn3jZ0muQGQNUfHNQGV9yNA1wgl354mi6Uaa0gb3VNev59RUYCsjBXb2+N14MZIAAZVvumm0jZxlX8KDQuwQDAc2GaHU8zC4SJ9rUxcvcfA8jN0dTk/X7RcuyTPGGy4OwL0ESPblBByJ0BUvcWosra4+Rzi+c3DNCTsTQmQdCoMSe0N2CmvhVi0XlGh1b5Efes8n9CIId2fVpw017Lh8J0C6YrRBtKWn3r1XWFOkwaAeQr7z89V3CnLxQdwu59IFyAdjSHcu1gIxKwP1Ad33zUTQlcZZpyswKk3DcEGVgZdRGlzPQ1i9w9PLYUiK+nVWRMY3+XYCnsQfSDYZI/1eLFMElaVTl4iWilAp1tUTWwAQOmlJzIX2ayuIxUrkbGmMu7smb7YjllVhef18yFB68y5SePOknYkeEYO5Sxa1KDCc+OsUlUIrnrmG7YSx6q1bKW7G74m0dj6ImR+goYDVNFZi28AsUD4xqFTA51uBQo/fqJY=
 before_install:
-#- openssl aes-256-cbc -K $encrypted_40ef2f4394e3_key -iv $encrypted_40ef2f4394e3_iv -in client-secret.json.enc -out client-secret.json -d
 - brew install wine rpm
 - npm i -g gulp-cli
 - npm i -g electron-packager
 before_script:
 - npm run make
-script:
-#- npm run test
-#- zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
 deploy:
   provider: gcs
   access_key_id: GOOGUYHHHUMEQ5GSNOWG
   secret_access_key:
-    secure: E3feoczgnvkkhX4VlvoZEykiuGlAzFFJ8yOdFVeQoYEmLAc/Vre3vo6ou/aLTYdCXQrDu7vUQSjsvQq6+hyiE4egDKeaBIuELDUaqHAXZo8giLlv4S5cUKsdNXiuR3NaaQRMasl3Swj6kZ0GXg7tIR/l1gJS6J9MSXTyJYn69pkFhg6g8XdmoYKA6/vZIby1DUr02Lj1prRLtx/7uGFIQYXqDPb8ovS6zsD0ugo1SDx7P+lxZVv5a5+aB8jkwqnNafE8fn7DNJALZ9OaQDdCYcak3spZqYtd8mDDxZuiOjmZOFYOPhV3EUvJOC2IEAhzovjB/NgWdNv3//142cbnwFLhvw6CgmDPQ+LASI1ucy+NVw3yb0OO3im+kWWaLs0qJ/wqVSyhyD7Oh/yqC/B20sfSDX9mi+G9Wd/HioIjBZxJ4pumBk0ANDSXpK0Hsx+vPQPErsM2UZDy8i16w5UYMWOY/BjhKUHi1T/JiR//A+xfOQ1+PHDvcaAGjaV4yQmRFFIH8UtaBWiUlF/vylNtN6bP/G2hyDMu7HpyIpW2mkWc0oIlkyeSEsZ4MB2Wz+2s72Ff1VZg6YSOnDYLuVr3FITtZ/Pekvg3o3Vt9ph7sCEI7yFrcOKnwpL0nXS3zofnw4NC3ZS1QLIksEPhHT51qjhy31gRoo9s8TkwIq4nCn8=
+    secure: i93rYCZtgyIBWO1PsLqqMfEIHP6swd56a+Nx8tdc8POBaxH2iIrJOPqnSijX9ScWudm81EFyl2Q3Fca9vxT47CA+tYj1JDnSyghz8MQdFrsP1IDmIjZAdqpOanKZRpAJ/AOYdD5yKJmtYzYQb97P9zYsuCic7JUAjGgnKAj0Qp6IT3pqMJ964rBAfas2XWIBtxAbBUCvU9kCNXk6DDjXxtd6kSxedfbYNeieIBhNIR+lQtRcj/kI/60YC66iGtgHPdX9c/aVi+N9K1zsNk2jBwLGPoDZwybV0Xjby+KJEUmtHAJ/KmkiMsv7fRQzTwLioRArYubWC2kI/st7xo9qyaR2VzLS+t3XqEYO2BQbiqQGlAyGDyJAqJD0d9IXGWpLAGomxO2qmRbU5q1+ox1C5gsAm5ICFyy+Z6TFzM2OQ7aEMzpzKkKvQwXX/9nYl2WvXHRO2P9cRmWweBybY6xILgYru/LoJheo5IsYd86b9STbCN6gvObkhym6X5WWbuv0y7HzhpDewZ2XXe+OG5biTX+dNV3+3Jyb0pTJWISwldgbL1Rn5KOEuFc5E0U60MlNzMNJxLfCZ1cF2B6dlpFVI/LJNQltLXUwU+fZAXDbs/nENxOz6IbHxvkoA4tZPg/13douujTD1sEmup2G2FITeQeQXz4tDkYqRemLKHqF7RU=
   bucket: selfkey-builds
   skip_cleanup: true
-  #local-dir: out/selfkey-identity-wallet-darwin-x64.zip
   local-dir: out
   on:
     branch: travis-automated-deployment
