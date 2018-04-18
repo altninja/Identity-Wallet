@@ -12,14 +12,36 @@ let priceUpdaterInterval, loadBalanceInterval = null;
 
 class Wallet {
 
-    static set $rootScope(value) { $rootScope = value; }
-    static set $q(value) { $q = value; }
-    static set $interval(value) { $interval = value; }
-    static set Web3Service(value) { Web3Service = value; }
-    static set CommonService(value) { CommonService = value; }
-    static set ElectronService(value) { ElectronService = value; } // TODO remove (use RPCService instead)
-    static set SqlLiteService(value) { SqlLiteService = value; }
-    static set EtherScanService(value) { EtherScanService = value; }
+    static set $rootScope(value) {
+        $rootScope = value;
+    }
+
+    static set $q(value) {
+        $q = value;
+    }
+
+    static set $interval(value) {
+        $interval = value;
+    }
+
+    static set Web3Service(value) {
+        Web3Service = value;
+    }
+
+    static set CommonService(value) {
+        CommonService = value;
+    }
+
+    static set ElectronService(value) {
+        ElectronService = value;
+    } // TODO remove (use RPCService instead)
+    static set SqlLiteService(value) {
+        SqlLiteService = value;
+    }
+
+    static set EtherScanService(value) {
+        EtherScanService = value;
+    }
 
     constructor(id, privateKey, publicKey, keystoreFilePath) {
         this.id = id;
@@ -185,7 +207,6 @@ class Wallet {
 
         return defer.promise;
     }
-
 
 
     addNewToken(data) {
@@ -376,6 +397,18 @@ class Wallet {
             });
         });
     }
+
+    loadExistingTokens() {
+
+        let allTokens = SqlLiteService.getTokens() || {};
+        let tokenKeys = Object.keys(allTokens);
+        let allTokensArr = tokenKeys.map((key) => {
+            return allTokens[key];
+        });
+
+        return allTokensArr;
+    }
+
 }
 
 module.exports = Wallet;

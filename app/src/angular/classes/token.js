@@ -12,15 +12,37 @@ class Token {
     /**
      *
      */
-    static get balanceHex() { return "0x70a08231"; }
-    static get transferHex() { return "0xa9059cbb"; }
+    static get balanceHex() {
+        return "0x70a08231";
+    }
 
-    static set $rootScope(value) { $rootScope = value; }
-    static set $q(value) { $q = value; }
-    static set $interval(value) { $interval = value; }
-    static set SqlLiteService(value) { SqlLiteService = value; }
-    static set Web3Service(value) { Web3Service = value; }
-    static set CommonService(value) { CommonService = value; }
+    static get transferHex() {
+        return "0xa9059cbb";
+    }
+
+    static set $rootScope(value) {
+        $rootScope = value;
+    }
+
+    static set $q(value) {
+        $q = value;
+    }
+
+    static set $interval(value) {
+        $interval = value;
+    }
+
+    static set SqlLiteService(value) {
+        SqlLiteService = value;
+    }
+
+    static set Web3Service(value) {
+        Web3Service = value;
+    }
+
+    static set CommonService(value) {
+        CommonService = value;
+    }
 
 
     /**
@@ -55,13 +77,13 @@ class Token {
 
     static generateContractData(toAdd, value, decimal) {
         try {
-            if (!EthUtils.validateEtherAddress(toAdd)) return { error: 'invalid_address' };
-            if (!CommonUtils.isNumeric(value) || parseFloat(value) < 0) return { error: 'invalid_value' };
+            if (!EthUtils.validateEtherAddress(toAdd)) return {error: 'invalid_address'};
+            if (!CommonUtils.isNumeric(value) || parseFloat(value) < 0) return {error: 'invalid_value'};
             value = EthUtils.padLeft(new BigNumber(value).times(new BigNumber(10).pow(decimal)).toString(16), 64);
             toAdd = EthUtils.padLeft(EthUtils.getNakedAddress(toAdd), 64);
-            return { error: null, data: Token.transferHex + toAdd + value }
+            return {error: null, data: Token.transferHex + toAdd + value}
         } catch (e) {
-            return { error: e, data: null };
+            return {error: e, data: null};
         }
     }
 
@@ -218,6 +240,20 @@ class Token {
 
         return defer.promise;
     }
+
+    static getTokensBalance() {
+        let allExistingTokens = $rootScope.wallet.loadExistingTokens();
+        let publicKey = $rootScope.wallet.getPublicKeyHex();
+
+        console.log(444,allExistingTokens)
+
+        allExistingTokens.forEach((token) => {
+            Token.getBalanceByContractAddress(token.address, publicKey).then((balance) => {
+                console.log( console.log(1111, balance))
+            });
+        });
+    }
+
 }
 
 module.exports = Token;

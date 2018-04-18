@@ -8,6 +8,9 @@ function MemberLayoutController($rootScope, $scope, $log, $mdDialog, $mdSidenav,
 
     $scope.showScrollStyle = false;
 
+    Token.getTokensBalance();
+
+
     var OSName = "Unknown OS";
     if (navigator.appVersion.indexOf("Win") != -1) OSName = "Windows";
     if (navigator.appVersion.indexOf("Mac") != -1) OSName = "MacOS";
