@@ -28,4 +28,4 @@ deploy:
     repo: SelfKeyFoundation/Identity-Wallet
     branch: travis-automated-deployment
   acl: public-read
-  local-dir: SelfKeyFoundation/Identity-Wallet/out
+  local-dir: /Users/travis/build/SelfKeyFoundation/Identity-Wallet/out
