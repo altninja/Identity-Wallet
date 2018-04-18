@@ -24,6 +24,5 @@ before_install:
 before_script:
 - npm run make
 - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
-- PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[",]//g'  | tr -d '[[:space:]]')
 script:
-- gsutil cp out/selfkey-identity-wallet-darwin-x64.zip gs://selfkey-builds/$PACKAGE_VERSION/
+- gsutil cp out/selfkey-identity-wallet-darwin-x64.zip gs://selfkey-builds/latest/
