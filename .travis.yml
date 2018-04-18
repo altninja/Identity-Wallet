@@ -15,6 +15,8 @@ before_install:
 before_script:
 - npm run make
 - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
+before_deploy:
+- cd $TRAVIS_BUILD_DIR
 deploy:
   provider: gcs
   access_key_id: GOOGUYHHHUMEQ5GSNOWG
