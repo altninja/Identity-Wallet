@@ -24,6 +24,4 @@ deploy:
   on:
     repo: SelfKeyFoundation/Identity-Wallet
     branch: travis-automated-deployment
-  skip_cleanup: true
   acl: public-read
-  local-dir: out
