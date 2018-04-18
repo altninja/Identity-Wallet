@@ -5,7 +5,6 @@ env:
   global:
   - NODE_ENV=test
   - OSENV=travis
-  - PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[",]//g'  | tr -d '[[:space:]]')
 notifications:
   slack:
     secure: fZJNvR4gMUki9/UcaaXYf76JxsdvYV7X15wzkIdQU42qboFG8jvlEiKEr7WP4h3WShJEfG/l70YoSvzO+e3K7vJ+bdpNnvcvgChVZosqVLKmv/jipjmFEdYS11pVvaWPdTet04zmYqrB24waAsaeMt1hMUSAOSuFwvcoYd01fo2guzoGwc+2NkuZTRrGkn3jZ0muQGQNUfHNQGV9yNA1wgl354mi6Uaa0gb3VNev59RUYCsjBXb2+N14MZIAAZVvumm0jZxlX8KDQuwQDAc2GaHU8zC4SJ9rUxcvcfA8jN0dTk/X7RcuyTPGGy4OwL0ESPblBByJ0BUvcWosra4+Rzi+c3DNCTsTQmQdCoMSe0N2CmvhVi0XlGh1b5Efes8n9CIId2fVpw017Lh8J0C6YrRBtKWn3r1XWFOkwaAeQr7z89V3CnLxQdwu59IFyAdjSHcu1gIxKwP1Ad33zUTQlcZZpyswKk3DcEGVgZdRGlzPQ1i9w9PLYUiK+nVWRMY3+XYCnsQfSDYZI/1eLFMElaVTl4iWilAp1tUTWwAQOmlJzIX2ayuIxUrkbGmMu7smb7YjllVhef18yFB68y5SePOknYkeEYO5Sxa1KDCc+OsUlUIrnrmG7YSx6q1bKW7G74m0dj6ImR+goYDVNFZi28AsUD4xqFTA51uBQo/fqJY=
@@ -25,5 +24,6 @@ before_install:
 before_script:
 - npm run make
 - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
+- PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[",]//g'  | tr -d '[[:space:]]')
 script:
 - gsutil cp out/selfkey-identity-wallet-darwin-x64.zip gs://selfkey-builds/$PACKAGE_VERSION/
