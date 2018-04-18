@@ -5,28 +5,25 @@ env:
   global:
   - NODE_ENV=test
   - OSENV=travis
+  - PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[",]//g'  | tr -d '[[:space:]]')
 notifications:
   slack:
     secure: fZJNvR4gMUki9/UcaaXYf76JxsdvYV7X15wzkIdQU42qboFG8jvlEiKEr7WP4h3WShJEfG/l70YoSvzO+e3K7vJ+bdpNnvcvgChVZosqVLKmv/jipjmFEdYS11pVvaWPdTet04zmYqrB24waAsaeMt1hMUSAOSuFwvcoYd01fo2guzoGwc+2NkuZTRrGkn3jZ0muQGQNUfHNQGV9yNA1wgl354mi6Uaa0gb3VNev59RUYCsjBXb2+N14MZIAAZVvumm0jZxlX8KDQuwQDAc2GaHU8zC4SJ9rUxcvcfA8jN0dTk/X7RcuyTPGGy4OwL0ESPblBByJ0BUvcWosra4+Rzi+c3DNCTsTQmQdCoMSe0N2CmvhVi0XlGh1b5Efes8n9CIId2fVpw017Lh8J0C6YrRBtKWn3r1XWFOkwaAeQr7z89V3CnLxQdwu59IFyAdjSHcu1gIxKwP1Ad33zUTQlcZZpyswKk3DcEGVgZdRGlzPQ1i9w9PLYUiK+nVWRMY3+XYCnsQfSDYZI/1eLFMElaVTl4iWilAp1tUTWwAQOmlJzIX2ayuIxUrkbGmMu7smb7YjllVhef18yFB68y5SePOknYkeEYO5Sxa1KDCc+OsUlUIrnrmG7YSx6q1bKW7G74m0dj6ImR+goYDVNFZi28AsUD4xqFTA51uBQo/fqJY=
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
 before_install:
+- openssl aes-256-cbc -K $encrypted_40ef2f4394e3_key -iv $encrypted_40ef2f4394e3_iv -in client-secret.json.enc -out client-secret.json -d
 - brew install wine rpm
 - npm i -g gulp-cli
 - npm i -g electron-packager
+- gcloud version || true
+- if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
+- source /home/travis/google-cloud-sdk/path.bash.inc
+- gcloud version
+- gcloud auth activate-service-account --key-file client-secret.json
 before_script:
 - npm run make
 - zip -r out/selfkey-identity-wallet-darwin-x64.zip out/selfkey-identity-wallet-darwin-x64
-before_deploy:
-- cd $TRAVIS_BUILD_DIR
-deploy:
-  provider: gcs
-  access_key_id: GOOGUYHHHUMEQ5GSNOWG
-  secret_access_key:
-    secure: VlNqJRk6tZVpYo3MRVUFysIMtc2M0X7Nl0OnNxUphvW2VMy8sT8e0UwgH13Ggsj33NRqqA11fj7wqXyMR9WCDsgtDM1kCM8VKrGQvbMkttPlEmC5PvLVwxT8CoCRlTCbH7adEeqA3eQtsrPOfKcx1Zv2LkzFF3n/8M2wnLhSbH5sqypFQK8GhtuoaTJpaBOpL7qxxUFR3lFNCDgWGedaySPnextfJ5HPG6AKwGk6DQoFn3IGBswW63xghwiSSs8mveZ+1T6ZLE8bbv3X6jOYeH22nM5SAB0BJTQxQCAM/9Fhx1LsBgACEnbvv3mJMZ9Qz5UbFVXJXSKXwu5A1+ULR9gLa39btO4JDQtUrAkqw0tYeZ8mGsCl62lw/9+TBrWMVezQiL+uJl/alLFqbgIgIIo3TdSgUkm/pfN5RtgJ50SyKGXQJAmsNEzo41HuEWvGhiEGsZezm4/5HECa63zwfvU6dQDZ+tjjpdn7OOrn0e+fzpZVZIDJkfEmyWnD4NZiRNkdxza3O7wOkGT2UoQLYB7Vs09obMAMRrW10LtjmI1P7sW+Mp4dAYXUC7fvWvKyHNCm1ZGScUGsvXTm/DwnCB9TzdiITgdcVnrre0KGQEWIdYlwHrOWqUsBs6JGM9l+ZP4N5Y1oz3GzAe9QOYP/FnR9D8ZBMHIvTCO7QvR2F8g=
-  bucket: selfkey-builds
-  skip-cleanup: true
-  skip_cleanup: true
-  on:
-    repo: SelfKeyFoundation/Identity-Wallet
-    branch: travis-automated-deployment
-  acl: public-read
-  local-dir: out
+script:
+- gsutil cp out/selfkey-identity-wallet-darwin-x64.zip gs://selfkey-builds/$PACKAGE_VERSION/
