@@ -23,6 +23,9 @@ before_install:
 - gcloud auth activate-service-account --key-file client-secret.json
 before_script:
 - npm run make
+- npm run make-win
 - zip -r out/selfkey-identity-wallet-darwin-x64-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-darwin-x64
+- zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32
 script:
 - gsutil cp out/selfkey-identity-wallet-darwin-x64-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/
+- gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/
