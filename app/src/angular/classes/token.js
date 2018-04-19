@@ -245,11 +245,13 @@ class Token {
         let allExistingTokens = $rootScope.wallet.loadExistingTokens();
         let publicKey = $rootScope.wallet.getPublicKeyHex();
 
-        console.log(444,allExistingTokens)
+        console.log(444, allExistingTokens)
 
         allExistingTokens.forEach((token) => {
             Token.getBalanceByContractAddress(token.address, publicKey).then((balance) => {
-                console.log( console.log(1111, balance))
+                if (balance > 0) {
+                    console.log(console.log(1111, balance))
+                }
             });
         });
     }
