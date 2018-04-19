@@ -22,13 +22,12 @@ before_install:
 - gcloud version
 - gcloud auth activate-service-account --key-file client-secret.json
 before_script:
-- "PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[\",]//g'  | tr -d '[[:space:]]')"
-- echo PACKAGE_VERSION $PACKAGE_VERSION
-- travis_wait 30
+#- "PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[\",]//g'  | tr -d '[[:space:]]')"
+#- travis_wait 30
 - npm run make
-- npm run make-win
+#- npm run make-win
 - zip -r out/selfkey-identity-wallet-darwin-x64-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-darwin-x64
-- zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32
+#- zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32
 script:
 - gsutil cp out/selfkey-identity-wallet-darwin-x64-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/
-- gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/
+#- gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/
