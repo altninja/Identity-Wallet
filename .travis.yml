@@ -23,7 +23,7 @@ before_install:
 - gcloud auth activate-service-account --key-file client-secret.json
 before_script:
 - "PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: '{ print $2 }'  | sed 's/[\",]//g'  | tr -d '[[:space:]]')"
-- echo PACKAGE_VERSION: $PACKAGE_VERSION
+- echo PACKAGE_VERSION $PACKAGE_VERSION
 - travis_wait 30
 - npm run make
 - npm run make-win
