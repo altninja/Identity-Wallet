@@ -157,8 +157,6 @@ function Web3Service($rootScope, $window, $q, $timeout, $log, $http, $httpParamS
                                         next(err);
                                     });
                                 });
-
-
                             })();
                         });
                     });
