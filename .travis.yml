@@ -18,6 +18,7 @@ before_install:
 - brew install mono
 - npm install -g gulp-cli
 - npm install -g node-gyp
+- npm install -g electron-forge
 #- gcloud version || true
 #- if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
 #- source $HOME/google-cloud-sdk/path.bash.inc
@@ -28,7 +29,7 @@ before_install:
 before_script:
 - 'PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: ''{ print $2 }''  | sed ''s/[",]//g''  | tr -d ''[[:space:]]'')'
 - gulp
-- ./node_modules/.bin/electron-forge make --platform=win32 --arch=ia32
+- electron-forge make --platform=win32 --arch=ia32
 #script:
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32; fi
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/; fi
