@@ -16,7 +16,8 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_40ef2f4394e3_key -iv $encrypted_40ef2f4394e3_iv -in client-secret.json.enc -out client-secret.json -d
 - brew install wine
 - brew install mono
-- npm i -g gulp-cli
+- npm install -g gulp-cli
+- npm install -g node-gyp
 #- gcloud version || true
 #- if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
 #- source $HOME/google-cloud-sdk/path.bash.inc
@@ -26,7 +27,7 @@ before_install:
 - brew list --versions
 before_script:
 - 'PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: ''{ print $2 }''  | sed ''s/[",]//g''  | tr -d ''[[:space:]]'')'
-- npm run package-win
-script:
+- npm run make-win
+#script:
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32; fi
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/; fi

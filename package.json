@@ -85,7 +85,7 @@
     "cz-conventional-changelog": "^2.1.0",
     "delay": "2.0.0",
     "electron-builder": "20.9.2",
-    "electron-forge": "4.1.7",
+    "electron-forge": "5.2.0",
     "electron-prebuilt-compile": "1.8.4",
     "eslint": "4.15.0",
     "eslint-config-prettier": "^2.8.0",
