@@ -28,7 +28,7 @@ before_install:
 before_script:
 - 'PACKAGE_VERSION=$(cat package.json  | grep version  | head -1  | awk -F: ''{ print $2 }''  | sed ''s/[",]//g''  | tr -d ''[[:space:]]'')'
 - gulp
-- ./node_modules/.bin/electron-forge make
+- ./node_modules/.bin/electron-forge make --platform=win32 --arch=ia32
 #script:
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then zip -r out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip out/selfkey-identity-wallet-win32-ia32; fi
 #- if [ "$TRAVIS_BRANCH" = "dev" ]; then gsutil cp out/selfkey-identity-wallet-win32-ia32-v$TRAVIS_BUILD_NUMBER.zip gs://selfkey-builds/$TRAVIS_BUILD_NUMBER/; fi
