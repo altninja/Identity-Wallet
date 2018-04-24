@@ -104,6 +104,9 @@ function onReady(app) {
         const RPCHandler = require('./controllers/rpc-handler')(app);
         electron.app.rpcHandler = new RPCHandler();
 
+        const Etherscan = require('./controllers/etherscan')(app);
+        electron.app.etherscan = new Etherscan();
+
         createKeystoreFolder();
 
         // TODO
@@ -181,6 +184,10 @@ function onReady(app) {
                 electron.app.cmcService.startUpdateData();
                 electron.app.airtableService.loadIdAttributeTypes();
                 electron.app.airtableService.loadExchangeData();
+
+                // start sync tx history
+                electron.app.etherscan.init();
+
                 app.win.webContents.send('APP_SUCCESS_LOADING');
             }).catch((error) => {
                 log.error(error);
