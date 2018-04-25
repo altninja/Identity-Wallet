@@ -241,8 +241,6 @@ module.exports = function (app, sqlLiteService) {
         });
     }
 
-
-
     function _findActive() {
         return new Promise((resolve, reject) => {
             sqlLiteService.select(TABLE_NAME, '*', { isSetupFinished: 1 }).then((rows) => {

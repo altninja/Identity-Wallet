@@ -100,38 +100,6 @@ module.exports = function (app) {
         });
     }
 
-    /*
-    function createTransactionsHistory() {
-        return new Promise((resolve, reject) => {
-            knex.schema.hasTable('transactions_history').then(function (exists) {
-                if (!exists) {
-                    knex.schema.createTable('transactions_history', (table) => {
-                        table.increments('id');
-                        table.integer('walletId').notNullable().references('wallets.id');
-                        table.integer('tokenId').references('tokens.id');
-                        table.string('txId').unique().notNullable();
-                        table.string('sentTo');
-                        table.decimal('value', null).notNullable();
-                        table.integer('timestamp').notNullable();
-                        table.integer('blockNumber').notNullable();
-                        table.decimal('gas').notNullable();
-                        table.string('gasPrice').notNullable();
-                        table.integer('createdAt').notNullable().defaultTo(new Date().getTime());
-                        table.integer('updatedAt');
-                    }).then((resp) => {
-                        console.log("Table:", "transactions_history", "created.");
-                        resolve("transactions_history created");
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-    */
-
     /**
      * public methods
      */

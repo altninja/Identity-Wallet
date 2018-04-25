@@ -186,7 +186,7 @@ function onReady(app) {
                 electron.app.airtableService.loadExchangeData();
 
                 // start sync tx history
-                electron.app.etherscan.init();
+                electron.app.etherscan.startSyncing();
 
                 app.win.webContents.send('APP_SUCCESS_LOADING');
             }).catch((error) => {
