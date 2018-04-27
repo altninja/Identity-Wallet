@@ -39,11 +39,9 @@ module.exports = function (app) {
     let AppSetting = require('./models/app-setting.js')(app, controller);
     controller.prototype.AppSetting = AppSetting;
 
-    let WalletSetting = require('./models/wallet-setting.js')(app, controller);
-    controller.prototype.WalletSetting = WalletSetting;
 
-    let Country = require('./models/country.js')(app, controller);
-    controller.prototype.Country = Country;
+
+
 
     let Document = require('./models/document.js')(app, controller);
     controller.prototype.Document = Document;
@@ -57,8 +55,7 @@ module.exports = function (app) {
     let Token = require('./models/token.js')(app, controller);
     controller.prototype.Token = Token;
 
-    let GuideSetting = require('./models/guide-setting.js')(app, controller);
-    controller.prototype.GuideSetting = GuideSetting;
+
 
     let ActionLog = require('./models/action-log.js')(app, controller);
     controller.prototype.ActionLog = ActionLog;
@@ -81,21 +78,21 @@ module.exports = function (app) {
     controller.prototype.init = () => {
         let promises = [];
 
-        promises.push(Country.init());
+        
         promises.push(Document.init());
         promises.push(IdAttributeType.init());
         promises.push(Token.init());
         promises.push(Wallet.init());
         promises.push(AppSetting.init());
-        promises.push(GuideSetting.init());
+
         promises.push(IdAttribute.init());
         promises.push(TokenPrice.init());
         promises.push(WalletToken.init());
         promises.push(TransactionHistory.init());
         promises.push(ActionLog.init());
-        promises.push(WalletSetting.init());
+
         promises.push(ExchangeDataHandler.init());
-        
+
         return Promise.all(promises)
     }
 

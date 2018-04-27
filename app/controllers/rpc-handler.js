@@ -26,7 +26,6 @@ module.exports = function (app) {
     const controller = function () {
     };
 
-
     const userDataDirectoryPath = electron.app.getPath('userData');
     const walletsDirectoryPath = path.resolve(userDataDirectoryPath, 'wallets');
     const documentsDirectoryPath = path.resolve(userDataDirectoryPath, 'documents');

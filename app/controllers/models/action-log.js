@@ -3,7 +3,6 @@ const electron = require('electron');
 module.exports = function (knex) {
     const TABLE_NAME = 'action_logs';
     const Controller = function () { };
-    let knex = sqlLiteService.knex;
 
     /**
      *
