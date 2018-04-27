@@ -24,9 +24,7 @@ module.exports = function (app, sqlLiteService) {
 
                         for (let i in countriesList) {
                             let item = countriesList[i];
-                            item.createdAt = new Date().getTime();
                             item.dialCode = item.dial_code;
-
                             delete item.dial_code;
 
                             promises.push(sqlLiteService.insertIntoTable(TABLE_NAME, item));

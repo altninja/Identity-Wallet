@@ -1,67 +1,40 @@
 const ethTokensList = require('./../../../assets/data/eth-tokens.json');
 
-const Promise = require('bluebird');
+const electron = require('electron');
 
-module.exports = function (app, sqlLiteService) {
+module.exports = function (knex) {
     const TABLE_NAME = 'tokens';
     const Controller = function () { };
-
-    let knex = sqlLiteService.knex;
+    const helpers = electron.app.helpers;
 
     /**
      *
      */
-    Controller.init = _init;
     Controller.findAll = _findAll;
+    Controller.findById = _findById;
 
-    /**
-     *
-     */
-    function _init() {
-        return new Promise((resolve, reject) => {
-            knex.schema.hasTable(TABLE_NAME).then((exists) => {
-                if (!exists) {
-                    knex.schema.createTable(TABLE_NAME, (table) => {
-                        table.increments('id');
-                        table.string('symbol').unique().notNullable();
-                        table.integer('decimal').notNullable();
-                        table.string('address').notNullable();
-                        table.binary('icon');
-                        table.integer('isCustom').notNullable().defaultTo(0);
-                        table.integer('createdAt').notNullable();
-                        table.integer('updatedAt');
-                    }).then((resp) => {
-                        let promises = [];
 
-                        for (let i in ethTokensList) {
-                            let item = ethTokensList[i];
-                            promises.push(sqlLiteService.insertIntoTable('tokens', { address: item.address, symbol: item.symbol, decimal: item.decimal, createdAt: new Date().getTime() }));
-                        }
-
-                        Promise.all(promises).then(() => {
-                            resolve("Table: " + TABLE_NAME + " created.");
-                        }).catch((error) => {
-                            reject(error);
-                        });
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
+    async function _findAll() {
+        try {
+            // TODO (networkId: 1 .. TEMP while there isn't support for testNet )
+            return await knex(TABLE_NAME).select().where({networkId: 1});
+        } catch (e) {
+            throw 'tokens_findAll_error';
+        }
     }
 
-    function _findAll() {
-        return new Promise((resolve, reject) => {
-            knex(TABLE_NAME).select().then((rows) => {
-                resolve(rows);
-            }).catch((error) => {
-                reject({ message: "error_while_selecting", error: error });
-            });
-        });
-    }
+    async function _findById(id) {
+        try {
+            let rows = await knex(TABLE_NAME).select().where({id: id});
 
+            if(rows && rows.length === 1){
+                return rows[0]
+            }
+
+            return null;
+        } catch (e) {
+            throw 'tokens_findById_error';
+        }
+    }
     return Controller;
 }

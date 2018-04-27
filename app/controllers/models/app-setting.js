@@ -1,43 +1,38 @@
 const electron = require('electron');
 const Promise = require('bluebird');
 
-module.exports = function (app, sqlLiteService) {
+module.exports = function (knex) {
+
     const TABLE_NAME = 'app_settings';
     const Controller = function () { };
-
-    let knex = sqlLiteService.knex;
-
-    /**
-     *
-     */
-    Controller.init = _init;
+    const helpers = electron.app.helpers;
 
     /**
      *
      */
-    function _init() {
-        return new Promise((resolve, reject) => {
-            knex.schema.hasTable(TABLE_NAME).then((exists) => {
-                if (!exists) {
-                    knex.schema.createTable(TABLE_NAME, (table) => {
-                        table.increments('id');
-                        table.string('dataFolderPath').notNullable();
-                        table.integer('createdAt').notNullable();
-                        table.integer('updatedAt');
-                    }).then((resp) => {
-                        sqlLiteService.insertIntoTable(TABLE_NAME, { dataFolderPath: electron.app.getPath('userData'), createdAt: new Date().getTime() }).then(() => {
-                            resolve("Table: " + TABLE_NAME + " created.");
-                        }).catch((error) => {
-                            reject(error);
-                        });
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
+    Controller.findById = _findById;
+    Controller.updateById = _updateById;
+
+    /**
+     *
+     */
+    async function _findById(id) {
+        try {
+            let rows = await knex(TABLE_NAME).select().where({id: id});
+            return rows[0]
+        } catch (e) {
+            throw 'app_settings_findById_error';
+        }
+    }
+
+    async function _updateById (id, data) {
+        try {
+            let updatedIds = await knex(TABLE_NAME).update(data).where({id: id});
+            let rows = await knex(TABLE_NAME).select().where({id: id});
+            return rows[0];
+        } catch (e) {
+            throw 'app_settings_updateById_error';
+        }
     }
 
     return Controller;

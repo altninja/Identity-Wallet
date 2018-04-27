@@ -11,7 +11,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
     let TOKENS_STORE = {};
     let TOKEN_PRICES_STORE = {};
     let WALLETS_STORE = {};
-    let GUIDE_SETTINGS = {};
+    let APP_SETTINGS = {};
     let COUNTRIES = [];
     let EXCHANGE_DATA = [];
 
@@ -26,7 +26,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             if (RPCService.ipcRenderer) {
                 this.loadData().then((resp) => {
                     $log.info("DONE", ID_ATTRIBUTE_TYPES_STORE, TOKENS_STORE, TOKEN_PRICES_STORE, WALLETS_STORE);
-                    this.startTokenPriceUpdaterListener();
+                    //this.startTokenPriceUpdaterListener();
                 }).catch((error) => {
                     $log.error(error);
                 });
@@ -45,13 +45,13 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         loadData() {
             let promises = [];
 
-            promises.push(this.loadGuideSettings());
+            promises.push(this.loadAppSettings());
             promises.push(this.loadIdAttributeTypes());
             promises.push(this.loadTokens());
-            promises.push(this.loadTokenPrices());
+            //promises.push(this.loadTokenPrices());
             promises.push(this.loadWallets());
             promises.push(this.loadCountries());
-            promises.push(this.loadExchangeData());
+            //promises.push(this.loadExchangeData());
 
             return $q.all(promises).then((data) => {
                 $rootScope.$broadcast(EVENTS.APP_DATA_LOAD);
@@ -107,11 +107,9 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             });
         }
 
-        loadGuideSettings() {
-            return RPCService.makeCall('getGuideSettings', null).then((guideSettings) => {
-                if (guideSettings && guideSettings.length) {
-                    GUIDE_SETTINGS = guideSettings[0];
-                }
+        loadAppSettings() {
+            return RPCService.makeCall('getAppSettings', null).then((appSettings) => {
+                APP_SETTINGS = appSettings;
             });
         }
 
@@ -175,14 +173,19 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         }
 
         /**
-         * guide_settings
+         * app_settings
          */
-        getGuideSettings() {
-            return GUIDE_SETTINGS;
+        getAppSettings() {
+            return APP_SETTINGS;
         }
 
-        saveGuideSettings(data) {
-            return RPCService.makeCall('saveGuideSettings', data);
+        setAppSettings(appSettings) {
+            APP_SETTINGS = appSettings;
+        }
+
+        saveAppSettings(appSettings) {
+            APP_SETTINGS = appSettings;
+            return RPCService.makeCall('saveAppSettings', appSettings);
         }
 
         /**

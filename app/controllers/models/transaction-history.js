@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 
 module.exports = function (app, sqlLiteService) {
-    const TABLE_NAME = 'transactions_history';
+    const TABLE_NAME = 'tx_history';
     const Controller = function () { };
 
     let knex = sqlLiteService.knex;
@@ -23,18 +23,27 @@ module.exports = function (app, sqlLiteService) {
             knex.schema.hasTable(TABLE_NAME).then((exists) => {
                 if (!exists) {
                     knex.schema.createTable(TABLE_NAME, (table) => {
-                        table.increments('id');
-                        table.integer('walletId').notNullable().references('wallets.id');
-                        table.integer('tokenId').references('tokens.id');
-                        table.string('txId').unique().notNullable();
-                        table.string('sentTo');
-                        table.decimal('value', null).notNullable();
-                        table.integer('timestamp').notNullable();
-                        table.integer('blockNumber').notNullable();
-                        table.decimal('gas').notNullable();
-                        table.string('gasPrice').notNullable();
-                        table.integer('createdAt').notNullable();
-                        table.integer('updatedAt');
+                        table.string('hash').unique().notNullable();
+                        table.integer('blockNumber');
+                        table.integer('timeStamp').notNullable();
+                        table.integer('nonce').notNullable();
+                        table.string('blockHash');
+                        table.string('contractAddress').notNullable();
+                        table.string('from').notNullable();
+                        table.string('to').notNullable();
+                        table.integer('value').notNullable();
+                        table.string('tokenName').notNullable();
+                        table.string('tokenSymbol').notNullable();
+                        table.integer('tokenDecimal').notNullable();
+                        table.integer('transactionIndex').notNullable();
+                        table.integer('gas').notNullable();
+                        table.integer('gasPrice').notNullable();
+                        table.integer('cumulativeGasUsed');
+                        table.string('input');
+                        table.integer('confirmations');
+                        table.integer('isError');
+                        table.integer('txReceiptStatus');
+                        table.integer('networkId').notNullable();
                     }).then((resp) => {
                         resolve("Table: " + TABLE_NAME + " created.");
                     }).catch((error) => {

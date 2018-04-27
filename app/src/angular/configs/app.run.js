@@ -159,9 +159,9 @@ function AppRun($rootScope, $log, $window, $timeout, $interval, $q, $state, $tra
     };
 
     $rootScope.checkTermsAndConditions = () => {
-        let guideSettings = SqlLiteService.getGuideSettings();
-
-        if (!guideSettings.termsAccepted) {
+        let appSettings = SqlLiteService.getAppSettings();
+console.log("??????", appSettings);
+        if (!appSettings.termsAccepted) {
             $timeout(() => {
                 $mdDialog.show({
                     controller: 'TermsDialogController',

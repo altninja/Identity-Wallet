@@ -7,10 +7,10 @@ function StartupGuideDialogController($rootScope, $scope, $log, $q, $mdDialog, $
 
     $scope.isLoading = false;
 
-    let guideSettings = SqlLiteService.getGuideSettings();
-    guideSettings.guideShown = true;
+    let appSettings = SqlLiteService.getAppSettings();
+    appSettings.guideShown = true;
 
-    SqlLiteService.saveGuideSettings(guideSettings);
+    SqlLiteService.saveAppSettings(appSettings);
 
     $scope.cancel = (event) => {
         $mdDialog.cancel();

@@ -8,25 +8,24 @@ function TermsDialogController($rootScope, $scope, $log, $q, $mdDialog, SqlLiteS
     $scope.step = 'main'
     $scope.scrolledBottom = false;
 
-    let guideSettings = SqlLiteService.getGuideSettings();
+    let appSettings = SqlLiteService.getAppSettings();
 
     $scope.changeStep = (step) => {
         $scope.step = step;
     }
 
     $scope.agree = (event) => {
-        
+
         if (process.env.NODE_ENV !== 'test') {
             if (!$scope.scrolledBottom){
                 return;
             }
         }
 
-        
         $scope.isLoading = true;
-        guideSettings.termsAccepted = true;
+        appSettings.termsAccepted = true;
 
-        let savePromise = SqlLiteService.saveGuideSettings(guideSettings);
+        let savePromise = SqlLiteService.saveAppSettings(appSettings);
         savePromise.then(() => {
             $scope.isLoading = false;
             $mdDialog.hide();

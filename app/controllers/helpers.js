@@ -1,5 +1,6 @@
 'use strict';
 
+const Promise = require('bluebird');
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -64,7 +65,7 @@ module.exports = function (app) {
     controller.generateEmptyIdAttributeObject = _generateEmptyIdAttributeObject;
     controller.generateEmptyIdAttributeItemObject = _generateEmptyIdAttributeItemObject;
     controller.generateEmptyIdAttributeItemValueObject = _generateEmptyIdAttributeItemValueObject;
-
+    controller.promisify = (fn) => new Promise((resolve, reject) => fn(resolve));
 
 
 

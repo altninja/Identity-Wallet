@@ -69,42 +69,18 @@ module.exports = function (app) {
     let TokenPrice = require('./models/token-price.js')(app, controller);
     controller.prototype.TokenPrice = TokenPrice;
 
+    let WalletToken = require('./models/wallet-token.js')(app, controller);
+    controller.prototype.WalletToken = WalletToken;
+
     let TransactionHistory = require('./models/transaction-history.js')(app, controller);
     controller.prototype.TransactionHistory = TransactionHistory;
-
-    /**
-     * tables
-     */
-    function createWalletTokens() {
-        return new Promise((resolve, reject) => {
-            knex.schema.hasTable('wallet_tokens').then(function (exists) {
-                if (!exists) {
-                    knex.schema.createTable('wallet_tokens', (table) => {
-                        table.increments('id');
-                        table.integer('walletId').notNullable().references('wallets.id');
-                        table.integer('tokenId').notNullable().references('tokens.id');
-                        table.decimal('balance').defaultTo(0);
-                        table.integer('recordState').defaultTo(1);
-                        table.integer('createdAt').notNullable().defaultTo(new Date().getTime());
-                        table.integer('updatedAt');
-                    }).then((resp) => {
-                        console.log("Table:", "wallet_tokens", "created.");
-                        resolve("wallet_tokens created");
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
 
     /**
      * public methods
      */
     controller.prototype.init = () => {
         let promises = [];
+
         promises.push(Country.init());
         promises.push(Document.init());
         promises.push(IdAttributeType.init());
@@ -114,11 +90,12 @@ module.exports = function (app) {
         promises.push(GuideSetting.init());
         promises.push(IdAttribute.init());
         promises.push(TokenPrice.init());
-        promises.push(createWalletTokens());
+        promises.push(WalletToken.init());
         promises.push(TransactionHistory.init());
         promises.push(ActionLog.init());
         promises.push(WalletSetting.init());
         promises.push(ExchangeDataHandler.init());
+        
         return Promise.all(promises)
     }
 
@@ -129,7 +106,6 @@ module.exports = function (app) {
     controller.prototype.wallet_new_token_insert = (data, balance, walletId) => {
         data.createdAt = new Date().getTime();
         return new Promise((resolve, reject) => {
-
             knex.transaction((trx) => {
                 knex('tokens')
                     .transacting(trx)
@@ -157,23 +133,6 @@ module.exports = function (app) {
      * wallet_tokens
      */
     // TODO
-    controller.prototype.walletTokens_selectByWalletId = (walletId) => {
-        return new Promise((resolve, reject) => {
-            let promise = knex('wallet_tokens')
-                .select('wallet_tokens.*', 'token_prices.name', 'token_prices.priceUSD', 'tokens.symbol', 'tokens.decimal', 'tokens.address', 'tokens.isCustom')
-                .leftJoin('tokens', 'tokenId', 'tokens.id')
-                .leftJoin('token_prices', 'tokens.symbol', 'token_prices.symbol')
-                .where({ walletId: walletId, recordState: 1 });
-
-            promise.then((rows) => {
-                resolve(rows);
-            }).catch((error) => {
-                reject({ message: "error_while_selecting", error: error });
-            });
-        });
-    }
-
-    // TODO
     function walletTokens_selectById(id) {
         return new Promise((resolve, reject) => {
             let promise = knex('wallet_tokens')
@@ -190,9 +149,6 @@ module.exports = function (app) {
             });
         });
     }
-
-    // TODO
-    controller.prototype.walletTokens_selectById = walletTokens_selectById;
 
     // TODO
     controller.prototype.wallet_tokens_insert = (data) => {
@@ -230,37 +186,6 @@ module.exports = function (app) {
     controller.prototype.token_update = (data) => {
         return updateById('tokens', data);
     }
-
-    /**
-     * transactions history
-     */
-    /*
-    controller.prototype.transactionsHistory_selectAll = () => {
-        return new Promise((resolve, reject) => {
-            knex('transactions_history').select().then((rows) => {
-                if (rows && rows.length) {
-                    resolve(rows);
-                } else {
-                    resolve([]);
-                }
-            }).catch((error) => {
-                reject({ message: "error_while_selecting", error: error });
-            });
-        });
-    }
-    */
-
-    /*
-    controller.prototype.transactionsHistory_selectByWalletId = (id) => {
-        return selectTable('transactions_history', { walletId: id });
-    }
-    */
-
-    /*
-    controller.prototype.transactionsHistory_selectByWalletIdAndTokenId = (query) => {
-        return selectTable('transactions_history', { walletId: query.walletId, tokenId: query.tokenId });
-    }
-    */
 
     controller.prototype.transactionsHistory_insert = (data) => {
         return insertIntoTable('transactions_history', data);

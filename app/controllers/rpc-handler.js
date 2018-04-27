@@ -17,6 +17,8 @@ const async = require('async');
 
 const RPC_METHOD = "ON_RPC";
 
+const countriesList = require('../../assets/data/country-list.json');
+
 module.exports = function (app) {
     const log = app.log;
 
@@ -24,68 +26,134 @@ module.exports = function (app) {
     const controller = function () {
     };
 
-    const storeFileName = 'main-store.json'; // TODO
+
     const userDataDirectoryPath = electron.app.getPath('userData');
     const walletsDirectoryPath = path.resolve(userDataDirectoryPath, 'wallets');
     const documentsDirectoryPath = path.resolve(userDataDirectoryPath, 'documents');
 
     log.info(userDataDirectoryPath);
 
+    // (done)
+    controller.prototype.getCountries = function (event, actionId, actionName, args) {
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, countriesList);
+    }
 
-    /**
-     * refactored methods
-     */
+    // (done)
+    controller.prototype.getAppSettings = async function (event, actionId, actionName, args) {
+        let appSettings = await electron.app.sqlLite.appSetting.findById(1);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, appSettings);
+    }
+
+    // (done)
+    controller.prototype.saveAppSettings = async function (event, actionId, actionName, args) {
+        let appSettings = await electron.app.sqlLite.appSetting.updateById(args.id, args);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, appSettings);
+    }
+
+    // (done)
     controller.prototype.getWalletsDirectoryPath = function (event, actionId, actionName, args) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, walletsDirectoryPath);
     }
 
-    // refactored
-    controller.prototype.createKeystoreFile = function (event, actionId, actionName, args) {
+    // (done)
+    controller.prototype.createKeystoreFile = async function (event, actionId, actionName, args) {
         const params = { keyBytes: 32, ivBytes: 16 };
         let dk = keythereum.create(params);
 
-        // asynchronous
-        keythereum.create(params, function (dk) {
-            let options = {
-                kdf: "pbkdf2",
-                cipher: "aes-128-ctr",
-                kdfparams: {
-                    c: 262144,
-                    dklen: 32,
-                    prf: "hmac-sha256"
-                }
-            };
-
-            let keystoreObject = keythereum.dump(args.password, dk.privateKey, dk.salt, dk.iv, options);
-            let keystoreFileFullPath = path.resolve(walletsDirectoryPath, keystoreObject.address);
-
-            if (!fs.existsSync(keystoreFileFullPath)) {
-                fs.mkdir(keystoreFileFullPath);
+        let options = {
+            kdf: "pbkdf2",
+            cipher: "aes-128-ctr",
+            kdfparams: {
+                c: 262144,
+                dklen: 32,
+                prf: "hmac-sha256"
             }
+        };
 
-            let outputPath = keythereum.exportToFile(keystoreObject, keystoreFileFullPath);
-            let keystoreFileName = path.basename(outputPath);
-            let keystoreFilePath = path.join(keystoreObject.address, keystoreFileName);
+        let keystoreObject = keythereum.dump(args.password, dk.privateKey, dk.salt, dk.iv, options);
+        let keystoreFileFullPath = path.resolve(walletsDirectoryPath, keystoreObject.address);
 
-            electron.app.sqlLiteService.Wallet.add(
-                {
-                    publicKey: keystoreObject.address,
-                    keystoreFilePath: keystoreFilePath
-                }
-            ).then((resp) => {
-                let privateKey = keythereum.recover(args.password, keystoreObject);
-                app.win.webContents.send(RPC_METHOD, actionId, actionName, null, {
-                    id: resp.id,
-                    isSetupFinished: resp.isSetupFinished,
-                    publicKey: keystoreObject.address,
-                    privateKey: privateKey,
-                    keystoreFilePath: keystoreFilePath
-                });
-            }).catch((error) => {
-                app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
+        if (!fs.existsSync(keystoreFileFullPath)) {
+            fs.mkdir(keystoreFileFullPath);
+        }
+
+        let outputPath = keythereum.exportToFile(keystoreObject, keystoreFileFullPath);
+        let keystoreFileName = path.basename(outputPath);
+        let keystoreFilePath = path.join(keystoreObject.address, keystoreFileName);
+
+        try {
+            let resp = await electron.app.sqlLite.wallet.add("Unnamed", keystoreObject.address, keystoreFilePath);
+
+            let privateKey = keythereum.recover(args.password, keystoreObject);
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, {
+                id: resp.id,
+                isSetupFinished: resp.isSetupFinished,
+                publicKey: keystoreObject.address,
+                privateKey: privateKey,
+                keystoreFilePath: keystoreFilePath
             });
-        });
+        } catch (error) {
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
+        };
     }
+
+    // (done)
+    controller.prototype.findAllWallets = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.wallet.findAll();
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // (done)
+    controller.prototype.getIdAttributeTypes = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.idAttributeType.findAll();
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // (done)
+    controller.prototype.getTokens = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.token.findAll();
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // (done)
+    controller.prototype.addInitialIdAttributesToWalletAndActivate = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.wallet.addInitialIdAttributesAndActivate(args.walletId, args.initialIdAttributesValues);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // >>>>>>>> TDOOD HERE >>>> NEEED TEST (done)
+    controller.prototype.getWalletTokens = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.walletToken.findByWalletId(args.walletId);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // >>>>>>>> TDOOD HERE >>>> NEEED TEST (done)
+    controller.prototype.getIdAttributes = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.idAttribute.findAllByWalletId(args.walletId);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // >>>>>>>> TDOOD HERE >>>> NEEED TEST (done)
+    controller.prototype.actionLogs_add = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.actionLog.add(args);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    // TODO - rename actionLogs_findByWalletId
+    // >>>>>>>> TDOOD HERE >>>> NEEED TEST (done)
+    controller.prototype.actionLogs_findAll = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.actionLog.findByWalletId(args.walletId);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+
+
+
+
+
+
+
+
 
     // refactored
     controller.prototype.importKeystoreFile = function (event, actionId, actionName, args) {
@@ -109,12 +177,7 @@ module.exports = function (app) {
                             return app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
                         }
 
-                        electron.app.sqlLiteService.Wallet.add(
-                            {
-                                publicKey: keystoreObject.address,
-                                keystoreFilePath: ksFilePathToSave
-                            }
-                        ).then((resp) => {
+                        electron.app.sqlLiteService.wallet.add("Unnamed", keystoreObject.address, ksFilePathToSave).then((resp) => {
                             let privateKey = keythereum.recover(args.password, keystoreObject);
                             app.win.webContents.send(RPC_METHOD, actionId, actionName, null, {
                                 id: resp.id,
@@ -144,7 +207,7 @@ module.exports = function (app) {
     // refactored
     controller.prototype.unlockKeystoreFile = function (event, actionId, actionName, args) {
         try {
-            let selectWalletPromise = electron.app.sqlLiteService.Wallet.findByPublicKey(args.publicKey);
+            let selectWalletPromise = electron.app.sqlLiteService.wallet.findByPublicKey(args.publicKey);
             selectWalletPromise.then((wallet) => {
                 let keystoreFileName = path.basename(wallet.keystoreFilePath);
                 let keystoreFileFullPath = path.join(walletsDirectoryPath, wallet.keystoreFilePath);
@@ -478,40 +541,23 @@ module.exports = function (app) {
         });
     }
 
-    controller.prototype.actionLogs_add = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.ActionLog.add(args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            log.error(error);
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
-    // TODO - rename actionLogs_findByWalletId
-    controller.prototype.actionLogs_findAll = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.ActionLog.findByWalletId(args.walletId).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            log.error(error);
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
     controller.prototype.importKYCPackage = function (event, actionId, actionName, args) {
 
         function getDocs(kycprocess, requirementId, documentFiles) {
             let result = [];
             let documents = kycprocess.escrow.documents;
-            for(let i in documents){
+            for (let i in documents) {
                 let document = documents[i];
-                if(document.requirementId == requirementId){
+                if (document.requirementId == requirementId) {
 
                     let fileItems = [];
 
                     let files = document.doc.files;
-                    for(let j in files){
+                    for (let j in files) {
                         let file = files[j];
-                        let fileItem = { name: files[j].fileName,  mimeType: files[j].contentType};
+                        let fileItem = { name: files[j].fileName, mimeType: files[j].contentType };
 
                         fileItem.buffer = documentFiles[fileItem.name] ? documentFiles[fileItem.name].buffer : null;
                         fileItem.size = documentFiles[fileItem.name] ? documentFiles[fileItem.name].size : null;
@@ -530,19 +576,19 @@ module.exports = function (app) {
         function getStaticDatas(kycprocess, requirementId) {
             let result = [];
             let answers = kycprocess.escrow.answers;
-            for(let i in answers){
+            for (let i in answers) {
                 let answer = answers[i];
-                if(answer.requirementId == requirementId){
+                if (answer.requirementId == requirementId) {
                     result = answer.answer;
                 }
             }
             return result;
         }
 
-        function getStaticDataRequirements(kycprocess){
+        function getStaticDataRequirements(kycprocess) {
             let result = {};
             kycprocess.requirements.questions.forEach((item) => {
-                if(!result[item.attributeType]){
+                if (!result[item.attributeType]) {
                     result[item.attributeType] = {
                         _id: item._id,
                         attributeType: item.attributeType
@@ -553,11 +599,11 @@ module.exports = function (app) {
             return result;
         }
 
-        function getDocumentRequirements(kycprocess){
+        function getDocumentRequirements(kycprocess) {
             let result = {};
             kycprocess.requirements.uploads.forEach((item) => {
-                if(item.attributeType){
-                    if(!result[item.attributeType]){
+                if (item.attributeType) {
+                    if (!result[item.attributeType]) {
                         result[item.attributeType] = {
                             _id: item._id,
                             attributeType: item.attributeType
@@ -586,7 +632,7 @@ module.exports = function (app) {
                         decompress(filePaths[0], os.tmpdir()).then(files => {
                             let documentFiles = {};
 
-                            files.forEach( (file) => {
+                            files.forEach((file) => {
                                 if (['export_code', 'kycprocess.json'].indexOf(file.path) > 0) {
                                     return false;
                                 }
@@ -618,39 +664,39 @@ module.exports = function (app) {
                             let requiredDocuments = getDocumentRequirements(kycprocess);
                             let requiredStaticData = getStaticDataRequirements(kycprocess);
 
-                            for(let i in requiredDocuments){
+                            for (let i in requiredDocuments) {
                                 let docs = getDocs(kycprocess, requiredDocuments[i]._id, documentFiles);
                                 requiredDocuments[i].docs = docs;
                             }
 
-                            for(let i in requiredStaticData){
+                            for (let i in requiredStaticData) {
                                 let staticDatas = getStaticDatas(kycprocess, requiredStaticData[i]._id);
                                 console.log("THE static data", staticDatas);
                                 requiredStaticData[i].staticDatas = staticDatas;
                             }
 
-                            if(kycprocess.user.firstName){
+                            if (kycprocess.user.firstName) {
                                 requiredStaticData['first_name'] = {
                                     attributeType: 'first_name',
                                     staticDatas: [kycprocess.user.firstName]
                                 };
                             }
 
-                            if(kycprocess.user.lastName){
+                            if (kycprocess.user.lastName) {
                                 requiredStaticData['last_name'] = {
                                     attributeType: 'last_name',
                                     staticDatas: [kycprocess.user.lastName]
                                 };
                             }
 
-                            if(kycprocess.user.middleName){
+                            if (kycprocess.user.middleName) {
                                 requiredStaticData['middle_name'] = {
                                     attributeType: 'middle_name',
                                     staticDatas: [kycprocess.user.middleName]
                                 };
                             }
 
-                            if(kycprocess.user.email){
+                            if (kycprocess.user.email) {
                                 requiredStaticData['email'] = {
                                     attributeType: 'email',
                                     staticDatas: [kycprocess.user.email]
@@ -664,9 +710,9 @@ module.exports = function (app) {
                                 exportCode,
                                 requiredDocuments,
                                 requiredStaticData
-                            ).then((data)=>{
+                            ).then((data) => {
                                 app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-                            }).catch((error)=>{
+                            }).catch((error) => {
                                 app.win.webContents.send(RPC_METHOD, actionId, actionName, "error", null);
                             })
                         });
@@ -699,21 +745,9 @@ module.exports = function (app) {
     /**
      * SQL Lite
      */
-    controller.prototype.getIdAttributeTypes = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.IdAttributeType.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
-    controller.prototype.getTokens = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Token.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
+
 
 
 
@@ -733,13 +767,7 @@ module.exports = function (app) {
         });
     }
 
-    controller.prototype.findAllWallets = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Wallet.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
 
     controller.prototype.updateWalletprofilePicture = function (event, actionId, actionName, args) {
         electron.app.sqlLiteService.Wallet.updateProfilePicture(args).then((data) => {
@@ -765,23 +793,9 @@ module.exports = function (app) {
         });
     }
 
-    controller.prototype.getCountries = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Country.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
-    /*
-    controller.prototype.getTransactionsHistory = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.TransactionHistory.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-    */
+
+
 
     // NEED TEST
     controller.prototype.getTransactionsHistoryByWalletId = function (event, actionId, actionName, args) {
@@ -850,41 +864,17 @@ module.exports = function (app) {
         });
     }
 
-    controller.prototype.getGuideSettings = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.GuideSetting.findAll().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
-    controller.prototype.saveGuideSettings = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.GuideSetting.updateById(args.id, args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
 
-    controller.prototype.getWalletTokens = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.walletTokens_selectByWalletId(args.walletId).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
+
+
 
     /**
      * IdAttribute
      */
     // DONE !!!!!
-    controller.prototype.addInitialIdAttributesToWalletAndActivate = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Wallet.addInitialIdAttributesAndActivate(args.walletId, args.initialIdAttributesValues).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
 
     // DONE !!!!!
     controller.prototype.addEditDocumentToIdAttributeItemValue = function (event, actionId, actionName, args) {
@@ -905,13 +895,7 @@ module.exports = function (app) {
     }
 
     // DONE !!!!!
-    controller.prototype.getIdAttributes = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.IdAttribute.findAllByWalletId(args.walletId).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
 
     // DONE !!!!!
     controller.prototype.addIdAttribute = function (event, actionId, actionName, args) {

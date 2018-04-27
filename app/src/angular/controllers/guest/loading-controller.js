@@ -39,7 +39,7 @@ function GuestLoadingController($rootScope, $scope, $log, $timeout, $state, $sta
         $rootScope.checkTermsAndConditions();
     }
 
-    $rootScope.$on('APP_SUCCESS_LOADING', () => {
+    $rootScope.$on('APP_SUCCESS_LOADING', (event, data) => {
         loadSqlLiteData();
     });
 };

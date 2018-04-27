@@ -1,5 +1,6 @@
 'use strict';
 
+const Promise = require('bluebird');
 const electron = require('electron');
 const config = require('../config');
 const request = require('request');
@@ -10,25 +11,21 @@ module.exports = function (app) {
 
     const controller = function () { };
 
-    controller.prototype.loadIdAttributeTypes = () => {
-        const ID_ATTRIBUTE_TABLE = "id-attributes"
-        request.get(AIRTABLE_API + ID_ATTRIBUTE_TABLE, (error, httpResponse, result) => {
-            let idAttributesArray = JSON.parse(result).ID_Attributes;
-            for (let i in idAttributesArray) {
-                if (!idAttributesArray[i].data) continue;
+    // TODO ... need to find items to (add/edit/remove)
+    controller.prototype.loadIdAttributeTypes = async () => {
+        const url = AIRTABLE_API + "id-attributes";
+        let result = await _makeRequest("get", url);
+        let idAttributesArray = result.ID_Attributes;
 
-                let item = idAttributesArray[i].data.fields;
-
-                electron.app.sqlLiteService.IdAttributeType.create(item).then((idAttributeType) => {
-                    // inserted
-                }).catch((error) => {
-                    // error
-                });
-            }
-        });
+        for (let i in idAttributesArray) {
+            if (!idAttributesArray[i].data) continue;
+            let item = idAttributesArray[i].data.fields;
+            await electron.app.sqlLite.idAttributeType.createIfNotExists(item);
+        }
     }
 
-    controller.prototype.loadExchangeData = () => {
+    /*
+    controller.prototype.loadExchangeData = async () => {
         const TABLE = 'Exchanges';
         request.get(AIRTABLE_API + TABLE, (error, httpResponse, result) => {
             const data = JSON.parse(result).Exchanges;
@@ -37,21 +34,35 @@ module.exports = function (app) {
                     continue;
                 }
                 const item = data[i].data.fields;
+
                 if (!item.name) {
                     continue;
                 }
+
                 const dataToSave = {
                     name: item.name,
                     data: JSON.stringify(item)
                 };
 
-                electron.app.sqlLiteService.ExchangeDataHandler.create(dataToSave).then((data) => {
-                    // inserted
-                }).catch((error) => {
-                    console.log("!!!!!!!!!!!!!", error)
-                    // error
-                });
+                await electron.app.sqlLiteService.ExchangeDataHandler.create(dataToSave);
             }
+        });
+    }
+    */
+
+    /**
+     *
+     */
+    function _makeRequest(method, url, data) {
+        return new Promise((resolve, reject) => {
+            request[method](url, (error, httpResponse, response) => {
+                try {
+                    response = JSON.parse(response);
+                    resolve(response);
+                } catch (error) {
+                    reject(error);
+                }
+            });
         });
     }
 

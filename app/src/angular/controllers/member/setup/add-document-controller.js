@@ -35,11 +35,6 @@ function MemberSetupAddDocumentController($rootScope, $scope, $log, $state, $tim
         this.status = status;
         this.message = message;
         this.isShown = isShown;
-        // Fade out
-     /*   $timeout(function () {
-            isShown = false;
-            $scope.isShown = false;
-        }, 3000);*/
     };
 
     $scope.selectFile = (event) => {
