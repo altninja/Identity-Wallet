@@ -76,14 +76,14 @@ function AddEditStaticDataDialogController($rootScope, $scope, $log, $q, $mdDial
         }
 
         if (mode === 'create') {
-            $scope.savePromise = RPCService.makeCall('addIdAttribute', {
+            $scope.savePromise = RPCService.makeCall('idAttribute_add', {
                 walletId: $rootScope.wallet.id,
                 idAttributeType: idAttributeType,
                 staticData: value.staticData,
                 file: null
             });
         } else {
-            $scope.savePromise = RPCService.makeCall('addEditStaticDataToIdAttributeItemValue', {
+            $scope.savePromise = RPCService.makeCall('idAttribute_addEditStaticDataOfIdAttributeItemValue', {
                 idAttributeId: idAttribute.id,
                 idAttributeItemId: idAttribute.items[0].id,
                 idAttributeItemValueId: idAttribute.items[0].values[0].id,

@@ -29,11 +29,11 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
             }
 
             scope.getItemValue = (item) => {
-                if(item.type === 'document' && item.documentName){
+                if (item.type === 'document' && item.documentName) {
                     return 'Uploaded';
                 }
 
-                switch(item.key){
+                switch (item.key) {
                     case 'birthdate':
                         return $filter('date')(Number(item.staticData.line1), 'yyyy/MM/dd');
                         break;
@@ -41,7 +41,7 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
                     case 'physical_address':
                         let value = item.staticData.line1 + ", ";
 
-                        if(item.staticData.line2){
+                        if (item.staticData.line2) {
                             value += item.staticData.line2 + ", ";
                         }
 
@@ -77,11 +77,12 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
             }
 
             // profile picture start
-
             let updateProfilePictureStyles = (profilePicture) => {
-                //binary
+                if(profilePicture){
+                    profilePicture = profilePicture.toString('base64');
+                }
                 scope.profilePictureStyles = {
-                    'background-image':  !profilePicture ? `url(${scope.userData.tempImage})` : `url("data:image/gif;base64,${profilePicture}")`
+                    'background-image': !profilePicture ? `url(${scope.userData.tempImage})` : `url("data:image/gif;base64,${profilePicture}")`
                 };
             };
 
@@ -94,9 +95,9 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
                     id: $rootScope.wallet.id,
                     profilePicture: profilePicture
                 }
-                RPCService.makeCall('updateWalletprofilePicture',data).then((res)=> {
+                RPCService.makeCall('updateWalletProfilePicture', data).then((res) => {
                     updateProfilePictureStyles(res.profilePicture);
-                }).catch((err)=> {
+                }).catch((err) => {
                     CommonService.showToast('error', 'Error while saving the file');
                 });
             };
@@ -113,7 +114,7 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
                     if (!selectedFile) {
                         return;
                     }
-                    let profilePicture = selectedFile.buffer.toString('base64');
+                    let profilePicture = selectedFile.buffer; //.toString('base64');
                     updateWalletprofilePicture(profilePicture);
                 }).catch((error) => {
                     CommonService.showToast('error', 'Maximum file size: The file could not be uploaded. The file exceeds the maximum upload size. Please upload file no larger than 50 MB.');

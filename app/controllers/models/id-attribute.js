@@ -1,17 +1,20 @@
 const electron = require('electron');
 const Promise = require('bluebird');
 
-module.exports = function (knex) {
+module.exports = function (knex, knexHelper) {
 
     const TABLE_NAME = 'id_attributes';
     const Controller = function () { };
     const helpers = electron.app.helpers;
 
-    Controller.selectById = selectById;
     Controller.create = _create;
-    Controller.addEditDocumentToIdAttributeItemValue = _addEditDocumentToIdAttributeItemValue;
-    Controller.addEditStaticDataToIdAttributeItemValue = _addEditStaticDataToIdAttributeItemValue;
     Controller.delete = _delete;
+
+    Controller.selectById = selectById;
+
+    Controller.addEditDocumentToIdAttributeItemValue = _addEditDocumentToIdAttributeItemValue;
+    Controller.addEditStaticDataOfIdAttributeItemValue = _addEditStaticDataOfIdAttributeItemValue;
+
     Controller.findAllByWalletId = _findAllByWalletId;
     Controller.addImportedIdAttributes = _addImportedIdAttributes;
 
@@ -19,49 +22,36 @@ module.exports = function (knex) {
     /**
      *
      */
-    // DONE !!!!!
-    function _create(walletId, idAttributeType, staticData, file) {
-        return knex.transaction((trx) => {
-            let selectPromise = sqlLiteService.select(TABLE_NAME, "*", { 'walletId': walletId, 'idAttributeType': idAttributeType }, trx)
-            selectPromise.then((rows) => {
-                return new Promise((resolve, reject) => {
-                    if (rows && rows.length) {
-                        return reject({ message: "id_attribute_already_exists" });
-                    }
+    async function _create(walletId, idAttributeType, staticData, file) {
+        let tx = await helpers.promisify(knex.transaction);
 
-                    let idAttribute = null;
+        try {
+            let idAttributes = await knex(TABLE_NAME).transacting(tx).select().where({ walletId: walletId, idAttributeType: idAttributeType });
+            if (idAttributes && idAttributes.length) {
+                tx.rollback();
+                throw 'id_attribute_already_exists';
+            }
 
-                    if (file) {
-                        file.createdAt = new Date().getTime();
-                        delete file.path;
-                        let insertDocumentPromise = sqlLiteService.insertAndSelect('documents', file, trx);
-                        insertDocumentPromise.then((document) => {
-                            idAttribute = helpers.generateIdAttributeObject(walletId, idAttributeType, staticData, document);
-                            idAttribute.items = JSON.stringify(idAttribute.items);
+            let idAttribute = null;
+            let document = null;
 
-                            __insert(idAttribute, trx).then((idAttribute) => {
-                                resolve(idAttribute);
-                            }).catch((error) => {
-                                reject({ message: "id_attribute_create_error", error: error });
-                            });
-                        }).catch((error) => {
-                            reject({ message: "id_attribute_create_error", error: error });
-                        });
-                    } else {
-                        idAttribute = helpers.generateIdAttributeObject(walletId, idAttributeType, staticData, null);
-                        idAttribute.items = JSON.stringify(idAttribute.items);
-                        __insert(idAttribute, trx).then((idAttribute) => {
-                            resolve(idAttribute);
-                        }).catch((error) => {
-                            reject({ message: "id_attribute_create_error", error: error });
-                        });
-                    }
-                });
-            }).then(trx.commit).catch(trx.rollback);
-        });
+            if (file) {
+                file.createdAt = new Date().getTime();
+                delete file.path;
+                document = await knexHelper.insertAndSelect('documents', file, tx);
+            }
+
+            idAttribute = helpers.generateIdAttributeObject(walletId, idAttributeType, staticData, document);
+            idAttribute.items = JSON.stringify(idAttribute.items);
+            idAttribute = await knexHelper.insertAndSelect(TABLE_NAME, idAttribute, tx);
+            tx.commit();
+            return idAttribute;
+        } catch (e) {
+            tx.rollback();
+            throw 'error';
+        }
     }
 
-    // (done) ... TODO need to finish
     async function _addEditDocumentToIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, file) {
 
         let tx = await helpers.promisify(knex.transaction);
@@ -113,40 +103,36 @@ module.exports = function (knex) {
         }
     }
 
-    // DONE !!!!!
-    function _addEditStaticDataToIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, staticData) {
-        return knex.transaction((trx) => {
-            let selectPromise = sqlLiteService.select(TABLE_NAME, "*", { id: idAttributeId }, trx);
-            selectPromise.then((rows) => {
+    async function _addEditStaticDataOfIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, staticData) {
+        let tx = await helpers.promisify(knex.transaction);
+        try {
+            let idAttributes = await knex(TABLE_NAME).transacting(tx).select().where({ id: idAttributeId })
 
-                return new Promise((resolve, reject) => {
-                    if (!rows || !rows.length) {
-                        return reject({ message: "id_attribute_not_found" });
-                    }
+            if (!idAttributes || !idAttributes.length) {
+                throw "id_attribute_not_found";
+            }
 
-                    let idAttribute = rows[0];
-                    idAttribute.items = JSON.parse(idAttribute.items);
+            let idAttribute = idAttributes[0];
+            idAttribute.items = JSON.parse(idAttribute.items);
 
-                    let value = helpers.getIdAttributeItemValue(idAttribute, idAttributeItemId, idAttributeItemValueId);
+            let value = helpers.getIdAttributeItemValue(idAttribute, idAttributeItemId, idAttributeItemValueId);
 
-                    value.staticData = staticData;
+            value.staticData = staticData;
 
-                    idAttribute.items = JSON.stringify(idAttribute.items);
-                    idAttribute.updatedAt = new Date().getTime();
+            idAttribute.items = JSON.stringify(idAttribute.items);
+            idAttribute.updatedAt = new Date().getTime();
 
-                    let updatePromise = knex(TABLE_NAME).transacting(trx).update(idAttribute).where({ 'id': idAttribute.id });
-                    updatePromise.then((rows) => {
-                        idAttribute.items = JSON.parse(idAttribute.items);
-                        resolve(idAttribute);
-                    }).catch((error) => {
-                        reject({ message: "update_error", error: error });
-                    });
-                });
-            }).then(trx.commit).catch(trx.rollback);
-        });
+            let updatedIds = await knex(TABLE_NAME).transacting(tx).update(idAttribute).where({ id: idAttribute.id });
+            idAttribute.items = JSON.parse(idAttribute.items);
+
+            tx.commit();
+            return idAttribute;
+        } catch (e) {
+            tx.rollback();
+            throw 'error';
+        }
     }
 
-    // (done)
     async function _findAllByWalletId(walletId) {
         let rows = await knex(TABLE_NAME).select().where({ 'walletId': walletId });
         if (!rows || !rows.length) {
@@ -171,9 +157,7 @@ module.exports = function (knex) {
         return idAttributes;
     }
 
-    // DONE !!!!!
-    function _delete(idAttributeId, idAttributeItemId, idAttributeItemValueId) {
-        console.log(idAttributeId, idAttributeItemId, idAttributeItemValueId);
+    async function _delete(idAttributeId, idAttributeItemId, idAttributeItemValueId) {
         return knex.transaction((trx) => {
             let selectPromise = knex(TABLE_NAME).transacting(trx).select().where('id', idAttributeId);
             selectPromise.then((rows) => {
@@ -383,6 +367,10 @@ module.exports = function (knex) {
     }
 
     function __insert(idAttribute, trx) {
+        return sqlLiteService.insertAndSelect(TABLE_NAME, idAttribute, trx);
+    }
+
+    async function _insertAndSelect(idAttribute, trx) {
         return sqlLiteService.insertAndSelect(TABLE_NAME, idAttribute, trx);
     }
 

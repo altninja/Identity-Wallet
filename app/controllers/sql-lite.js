@@ -28,6 +28,21 @@ module.exports = function () {
         }
     }
 
+    this.helper = {
+        insertAndSelect: async (table, entity, tx) => {
+            let qInsert = scope.knex(table);
+            let qSelect = scope.knex(table);
+            if(tx){
+                qInsert = qInsert.transacting(tx);
+                qSelect = qSelect.transacting(tx);
+            }
+            let insertedIds = await qInsert.insert(entity);
+            let rows = await qSelect.where({id: insertedIds[0]});
+
+            return rows[0];
+        }
+    }
+
     /**
      *
      */
@@ -35,7 +50,7 @@ module.exports = function () {
         scope.wallet = require('./models/wallet.js')(scope.knex);
         scope.appSetting = require('./models/app-setting.js')(scope.knex);
         scope.idAttributeType = require('./models/id-attribute-type.js')(scope.knex);
-        scope.idAttribute = require('./models/id-attribute.js')(scope.knex);
+        scope.idAttribute = require('./models/id-attribute.js')(scope.knex, scope.helper);
         scope.token = require('./models/token.js')(scope.knex);
         scope.walletToken = require('./models/wallet-token.js')(scope.knex);
         scope.actionLog = require('./models/action-log.js')(scope.knex);

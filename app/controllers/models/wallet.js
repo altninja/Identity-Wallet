@@ -14,23 +14,18 @@ module.exports = function (knex) {
     Controller.findAll = _findAll;
     Controller.addInitialIdAttributesAndActivate = _addInitialIdAttributesAndActivate;
     Controller.findByPublicKey = _findByPublicKey;
-
-    /*
-
-
-    Controller.findActive = _findActive;
-
-
-
-    
+    Controller.findById = _findById;
     Controller.updateProfilePicture = _updateProfilePicture;
 
+    /*
+    Controller.findActive = _findActive;
     Controller.editImportedIdAttributes = _editImportedIdAttributes;
     */
 
-    // DONE !!!!! ?????????
+    /**
+     *
+     */
     async function _addInitialIdAttributesAndActivate(walletId, initialIdAttributes) {
-
         let tx = await helpers.promisify(knex.transaction);
         try {
             let wallets = await knex(TABLE_NAME).transacting(tx).select().where({ id: walletId });
@@ -82,7 +77,6 @@ module.exports = function (knex) {
         }
     }
 
-
     async function _add(name, publicKey, keystoreFilePath) {
         let data = { name: name, publicKey: publicKey, keystoreFilePath: keystoreFilePath, createdAt: new Date().getTime() };
         let tx = await helpers.promisify(knex.transaction);
@@ -116,6 +110,32 @@ module.exports = function (knex) {
             return rows && rows.length === 1 ? rows[0] : null;
         } catch (e) {
             throw 'wallets_findByPublicKey_error';
+        }
+    }
+
+    async function _updateProfilePicture (walletId, profilePicture) {
+        let tx = await helpers.promisify(knex.transaction);
+        try {
+            let rows = await knex(TABLE_NAME).transacting(tx).select().where({'id': walletId});
+            let wallet = rows[0];
+
+            wallet.profilePicture = profilePicture;
+            await knex(TABLE_NAME).transacting(tx).update(wallet).where({'id': walletId})
+
+            tx.commit();
+            return wallet;
+        } catch (e) {
+            tx.rollback();
+            throw 'wallets_updateProfilePicture_error';
+        }
+    }
+
+    async function _findById(id) {
+        try {
+            let rows = await knex(TABLE_NAME).select().where({ id: id });
+            return rows && rows.length === 1 ? rows[0] : null;
+        } catch (e) {
+            throw 'wallets_findById_error';
         }
     }
 
@@ -227,27 +247,7 @@ module.exports = function (knex) {
 
 
 
-    function _updateProfilePicture (args) {
 
-        return knex.transaction((trx) => {
-            let selectPromise = knex(TABLE_NAME).transacting(trx).select().where('id', args.id);
-            selectPromise.then((rows) => {
-                return new Promise((resolve, reject) => {
-                    let wallet = rows[0];
-
-                    wallet.profilePicture = args.profilePicture;
-
-                    knex(TABLE_NAME).transacting(trx).update(wallet).where('id', args.id).then((updatedData) => {
-                        resolve(wallet);
-                    }).catch((error) => {
-                        reject({ message: "error", error: error });
-                    });
-                });
-            })
-                .then(trx.commit)
-                .catch(trx.rollback);
-        });
-    }
 
 
     */
