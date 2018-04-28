@@ -1,5 +1,4 @@
 const electron = require('electron');
-const Promise = require('bluebird');
 
 module.exports = function (knex) {
 

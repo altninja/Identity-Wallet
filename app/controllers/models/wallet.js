@@ -13,15 +13,16 @@ module.exports = function (knex) {
     Controller.add = _add;
     Controller.findAll = _findAll;
     Controller.addInitialIdAttributesAndActivate = _addInitialIdAttributesAndActivate;
+    Controller.findByPublicKey = _findByPublicKey;
 
     /*
 
 
     Controller.findActive = _findActive;
 
-    Controller.findByPublicKey = _findByPublicKey;
 
-    Controller.selectProfilePictureById = _selectProfilePictureById;
+
+    
     Controller.updateProfilePicture = _updateProfilePicture;
 
     Controller.editImportedIdAttributes = _editImportedIdAttributes;
@@ -106,6 +107,15 @@ module.exports = function (knex) {
             return rows;
         } catch (e) {
             throw 'wallet_findAll_error';
+        }
+    }
+
+    async function _findByPublicKey(publicKey) {
+        try {
+            let rows = await knex(TABLE_NAME).select().where({ publicKey: publicKey });
+            return rows && rows.length === 1 ? rows[0] : null;
+        } catch (e) {
+            throw 'wallets_findByPublicKey_error';
         }
     }
 
@@ -215,19 +225,7 @@ module.exports = function (knex) {
 
 
 
-    function _findByPublicKey(publicKey) {
-        return new Promise((resolve, reject) => {
-            sqlLiteService.select(TABLE_NAME, '*', { publicKey: publicKey }).then((rows) => {
-                if (rows && rows.length === 1) {
-                    resolve(rows[0]);
-                } else {
-                    resolve(null);
-                }
-            }).catch((error) => {
-                reject({ message: "wallet_findByPublicKey", error: error });
-            })
-        });
-    }
+
 
     function _updateProfilePicture (args) {
 
@@ -251,19 +249,7 @@ module.exports = function (knex) {
         });
     }
 
-    function _selectProfilePictureById (args) {
-        return new Promise((resolve, reject) => {
-            knex(TABLE_NAME).select().where('id', args.id).then((rows) => {
-                if (rows && rows.length) {
-                    resolve(rows[0].profilePicture);
-                } else {
-                    resolve(null);
-                }
-            }).catch((error) => {
-                reject({ message: "error_while_selecting_profile_picture", error: error });
-            });
-        });
-    }
+
     */
 
     return Controller;

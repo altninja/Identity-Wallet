@@ -52,6 +52,7 @@ function GuestKeystoreCreateStep2Controller($rootScope, $scope, $log, $q, $state
 
         promise.then((data) => {
             $rootScope.wallet = new Wallet(data.id, data.privateKey, data.publicKey, data.keystoreFilePath);
+            $rootScope.wallet.setAdditionalData(data);
             defer.resolve();
         }).catch((error) => {
             defer.reject(error);

@@ -160,7 +160,6 @@ function AppRun($rootScope, $log, $window, $timeout, $interval, $q, $state, $tra
 
     $rootScope.checkTermsAndConditions = () => {
         let appSettings = SqlLiteService.getAppSettings();
-console.log("??????", appSettings);
         if (!appSettings.termsAccepted) {
             $timeout(() => {
                 $mdDialog.show({

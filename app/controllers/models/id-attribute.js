@@ -61,9 +61,12 @@ module.exports = function (knex) {
         });
     }
 
-    // DONE !!!!!
-    function _addEditDocumentToIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, file) {
-        return knex.transaction((trx) => {
+    // (done) ... TODO need to finish
+    async function _addEditDocumentToIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, file) {
+
+        let tx = await helpers.promisify(knex.transaction);
+
+        try {
             let document = {
                 buffer: file.buffer,
                 name: file.name,
@@ -72,47 +75,42 @@ module.exports = function (knex) {
                 createdAt: new Date().getTime()
             };
 
-            let selectPromise = sqlLiteService.select(TABLE_NAME, "*", { id: idAttributeId }, trx);
-            selectPromise.then((rows) => {
+            let rows = await knex(TABLE_NAME).transacting(tx).select().where({ id: idAttributeId });
+            if (!rows || !rows.length) {
+                throw "id_attribute_not_found";
+            }
 
-                return new Promise((resolve, reject) => {
-                    if (!rows || !rows.length) {
-                        return reject({ message: "id_attribute_not_found" });
-                    }
+            let idAttribute = rows[0];
+            idAttribute.items = JSON.parse(idAttribute.items);
 
-                    let idAttribute = rows[0];
-                    idAttribute.items = JSON.parse(idAttribute.items);
+            let item = helpers.getRecordById(idAttribute.items, idAttributeItemId);
+            if (!item) {
+                throw "id_attribute_item_not_found";
+            }
 
-                    // delete old document if exists (TODO JUST UPDATE IT)
-                    let item = helpers.getRecordById(idAttribute.items, idAttributeItemId);
-                    let value = null;
-                    if (item && item.values && item.values.length) {
-                        value = helpers.getRecordById(item.values, idAttributeItemValueId);
-                        if (value && value.documentId) {
-                            knex('documents').where({ id: value.documentId }).del();
-                        }
-                    }
+            if (!item.values || !item.values.length) {
+                throw "id_attribute_item_value_not_found";
+            }
 
-                    let insertDocumentPromise = sqlLiteService.insertAndSelect('documents', document, trx);
-                    insertDocumentPromise.then((document) => {
-                        value.documentId = document.id;
-                        value.documentName = document.name;
+            let value = helpers.getRecordById(item.values, idAttributeItemValueId);
 
-                        idAttribute.items = JSON.stringify(idAttribute.items);
+            if (value.documentId) {
+                document.id = value.documentId;
+                document.updatedAt = new Date().getTime();
+                await knex('documents').transacting(tx).update(document).where({ id: value.documentId });
+            } else {
+                let insertedIds = await knex('documents').transacting(tx).insert(document);
+                value.documentId = insertedIds[0];
+                idAttribute.items = JSON.stringify(idAttribute.items);
+                await knex(TABLE_NAME).transacting(tx).update(idAttribute).where({ 'id': idAttribute.id });
+            }
 
-                        let updatePromise = knex(TABLE_NAME).transacting(trx).update(idAttribute).where({ 'id': idAttribute.id });
-                        updatePromise.then((rows) => {
-                            idAttribute.items = JSON.parse(idAttribute.items);
-                            resolve(idAttribute);
-                        }).catch((error) => {
-                            reject({ message: "update_error", error: error });
-                        });
-                    }).catch((error) => {
-                        reject({ message: "insert_error", error: error });
-                    });
-                });
-            }).then(trx.commit).catch(trx.rollback);
-        });
+            tx.commit();
+            return idAttribute;
+        } catch (e) {
+            tx.rollback();
+            throw 'id_attributes_error';
+        }
     }
 
     // DONE !!!!!
