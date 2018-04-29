@@ -69,7 +69,6 @@ module.exports = function (knex, knexHelper) {
             if (!rows || !rows.length) {
                 throw "id_attribute_not_found";
             }
-
             let idAttribute = rows[0];
             idAttribute.items = JSON.parse(idAttribute.items);
 
@@ -160,118 +159,102 @@ module.exports = function (knex, knexHelper) {
     async function _delete(idAttributeId, idAttributeItemId, idAttributeItemValueId) {
         let tx = await helpers.promisify(knex.transaction);
         try {
-            let idAttributes = await knex(TABLE_NAME).transacting(tx).select().where({'id': idAttributeId});
+            let idAttributes = await knex(TABLE_NAME).transacting(tx).select().where({ 'id': idAttributeId });
             let idAttribute = idAttributes[0];
 
             let value = helpers.getIdAttributeItemValue(idAttribute, idAttributeItemId, idAttributeItemValueId);
             if (value && value.documentId) {
-                await knex('documents').transacting(tx).del().where({'id': value.documentId});
+                await knex('documents').transacting(tx).del().where({ 'id': value.documentId });
             }
 
-            await knex(TABLE_NAME).transacting(tx).del().where({'id': idAttribute.id});
+            await knex(TABLE_NAME).transacting(tx).del().where({ 'id': idAttribute.id });
             tx.commit();
         } catch (e) {
             throw 'error';
         }
     }
 
-    // DONE !!!!!
-    function _addImportedIdAttributes(walletId, exportCode, requiredDocuments, requiredStaticData) {
-        return knex.transaction((trx) => {
-            sqlLiteService.select('wallet_settings', "*", { walletId: walletId }, trx).then((rows) => {
-                return new Promise((resolve, reject) => {
-                    let walletSetting = rows[0];
+    async function _addImportedIdAttributes(walletId, exportCode, requiredDocuments, requiredStaticData) {
 
-                    let idAttributesSavePromises = [];
-                    let documentsSavePromises = [];
+        let wallets = await knex('wallets').select().where({ id: walletId });
+        if (!wallets || !wallets.length) {
+            throw 'wallet_not_found';
+        }
 
-                    let itemsToSave = {};
+        let wallet = wallets[0];
 
-                    for (let i in requiredDocuments) {
-                        let requirement = requiredDocuments[i];
-                        if (!requirement.attributeType) continue;
+        let tx = await helpers.promisify(knex.transaction);
 
-                        let idAttribute = helpers.generateEmptyIdAttributeObject(walletId, requirement.attributeType);
-                        idAttribute.tempId = helpers.generateId();
+        try {
+            let idAttributesSavePromises = [];
+            let documentsSavePromises = [];
 
-                        for (let j in requirement.docs) {
-                            let fileItems = requirement.docs[j].fileItems;
-                            let idAttributeItem = helpers.generateEmptyIdAttributeItemObject();
-                            idAttribute.items.push(idAttributeItem);
+            let itemsToSave = {};
 
-                            for (let k in fileItems) {
-                                let fileItem = fileItems[k];
-                                let idAttributeItemValue = helpers.generateEmptyIdAttributeItemValueObject();
-                                idAttributeItem.values.push(idAttributeItemValue);
+            for (let i in requiredDocuments) {
+                let requirement = requiredDocuments[i];
+                if (!requirement.attributeType) continue;
 
-                                let document = {
-                                    name: fileItem.name,
-                                    mimeType: fileItem.mimeType,
-                                    size: fileItem.size,
-                                    buffer: fileItem.buffer,
-                                    createdAt: new Date().getTime()
-                                };
+                let idAttribute = helpers.generateEmptyIdAttributeObject(walletId, requirement.attributeType);
+                idAttribute.tempId = helpers.generateId();
 
-                                documentsSavePromises.push(sqlLiteService.insertIntoTable('documents', document, trx).then((document) => {
-                                    idAttributeItemValue.documentId = document.id;
-                                    idAttributeItemValue.documentName = document.name;
-                                    itemsToSave[idAttribute.tempId] = idAttribute;
-                                }).catch((error) => {
-                                    console.log(error);
-                                }));
-                            }
-                        }
-                    }
+                for (let j in requirement.docs) {
+                    let fileItems = requirement.docs[j].fileItems;
+                    let idAttributeItem = helpers.generateEmptyIdAttributeItemObject();
+                    idAttribute.items.push(idAttributeItem);
 
+                    for (let k in fileItems) {
+                        let fileItem = fileItems[k];
+                        let idAttributeItemValue = helpers.generateEmptyIdAttributeItemValueObject();
+                        idAttributeItem.values.push(idAttributeItemValue);
 
-                    for (let i in requiredStaticData) {
-                        let requirement = requiredStaticData[i];
-                        if (!requirement.attributeType) continue;
+                        let document = {
+                            name: fileItem.name,
+                            mimeType: fileItem.mimeType,
+                            size: fileItem.size,
+                            buffer: fileItem.buffer,
+                            createdAt: new Date().getTime()
+                        };
 
-                        let staticData = {};
-                        for (let j in requirement.staticDatas) {
-                            let answer = requirement.staticDatas[j];
-                            staticData["line" + (parseInt(j) + 1).toString()] = answer;
-                        }
-
-                        let idAttribute = helpers.generateIdAttributeObject(walletId, requirement.attributeType, staticData, null);
-                        idAttribute.tempId = helpers.generateId();
-
+                        document = await knexHelper.insertAndSelect('documents', document, tx);
+                        idAttributeItemValue.documentId = document.id;
+                        idAttributeItemValue.documentName = document.name;
                         itemsToSave[idAttribute.tempId] = idAttribute;
-
                     }
+                }
+            }
 
-                    walletSetting.airDropCode = exportCode;
+            for (let i in requiredStaticData) {
+                let requirement = requiredStaticData[i];
+                if (!requirement.attributeType) continue;
 
-                    Promise.all(documentsSavePromises).then(() => {
-                        for (let i in itemsToSave) {
-                            (function () {
-                                delete itemsToSave[i].tempId;
-                                itemsToSave[i].items = JSON.stringify(itemsToSave[i].items);
-                                idAttributesSavePromises.push(sqlLiteService.insertIntoTable('id_attributes', itemsToSave[i], trx))
-                            })(i)
-                        }
+                let staticData = {};
+                for (let j in requirement.staticDatas) {
+                    let answer = requirement.staticDatas[j];
+                    staticData["line" + (parseInt(j) + 1).toString()] = answer;
+                }
 
-                        Promise.all(idAttributesSavePromises).then(() => {
+                let idAttribute = helpers.generateIdAttributeObject(walletId, requirement.attributeType, staticData, null);
+                idAttribute.tempId = helpers.generateId();
 
-                            sqlLiteService.update('wallet_settings', walletSetting, { id: walletSetting.id }, trx).then(() => {
-                                resolve(walletSetting);
-                            }).catch((error) => {
-                                console.log(error);
-                                reject({ message: "wallets_insert_error", error: error });
-                            })
-                        }).catch((error) => {
-                            console.log(error);
-                            reject({ message: "wallets_insert_error", error: error });
-                        });
+                itemsToSave[idAttribute.tempId] = idAttribute;
+            }
 
-                    }).catch((error) => {
-                        console.log(error);
-                        reject({ message: "wallets_insert_error", error: error });
-                    });
-                });
-            }).then(trx.commit).catch(trx.rollback);
-        })
+            for (let i in itemsToSave) {
+                delete itemsToSave[i].tempId;
+                itemsToSave[i].items = JSON.stringify(itemsToSave[i].items);
+                await knexHelper.insertAndSelect('id_attributes', itemsToSave[i], tx);
+            }
+
+            wallet.airDropCode = exportCode;
+
+            await knex('wallets').transacting(tx).update(wallet).where({ id: wallet.id });
+            tx.commit();
+            return wallet;
+        } catch (e) {
+            tx.rollback();
+            throw 'error';
+        }
     }
 
     function selectById(id, trx) {

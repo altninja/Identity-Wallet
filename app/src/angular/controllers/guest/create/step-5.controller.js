@@ -10,7 +10,7 @@ function GuestKeystoreCreateStep5Controller($rootScope, $scope, $log, $state, $s
     }
 
     $scope.importKycFile = (event) => {
-        RPCService.makeCall('importKYCPackage', { walletId: $rootScope.wallet.id }).then((data) => {
+        RPCService.makeCall('idAttribute_importFromKYCPackage', { walletId: $rootScope.wallet.id }).then((data) => {
             //on cancel choose a file
             if (!data) {
                 return;

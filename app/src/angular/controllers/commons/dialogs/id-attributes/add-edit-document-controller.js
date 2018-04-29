@@ -36,7 +36,7 @@ function AddEditDocumentDialogController($rootScope, $scope, $log, $mdDialog, RP
                 CommonService.showToast('error', 'error while saving document');
             });
         } else {
-            $scope.savePromise = RPCService.makeCall('addEditDocumentToIdAttributeItemValue', {
+            $scope.savePromise = RPCService.makeCall('idAttribute_addEditDocumentOfIdAttributeItemValue', {
                 idAttributeId: idAttribute.id,
                 idAttributeItemId: idAttribute.items[0].id,
                 idAttributeItemValueId: idAttribute.items[0].values[0].id,

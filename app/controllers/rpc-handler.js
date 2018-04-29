@@ -221,9 +221,196 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
+    controller.prototype.idAttribute_addEditDocumentOfIdAttributeItemValue = function (event, actionId, actionName, args) {
+        electron.app.sqlLiteService.IdAttribute.addEditDocumentToIdAttributeItemValue(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId, args.file).then((data) => {
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+        }).catch((error) => {
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
+        });
+    }
+
     controller.prototype.idAttribute_delete = async function (event, actionId, actionName, args) {
         let data = await electron.app.sqlLite.idAttribute.delete(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId);
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    controller.prototype.idAttribute_importFromKYCPackage = async function (event, actionId, actionName, args) {
+        function getDocs(kycprocess, requirementId, documentFiles) {
+            let result = [];
+            let documents = kycprocess.escrow.documents;
+            for (let i in documents) {
+                let document = documents[i];
+                if (document.requirementId == requirementId) {
+
+                    let fileItems = [];
+
+                    let files = document.doc.files;
+                    for (let j in files) {
+                        let file = files[j];
+                        let fileItem = { name: files[j].fileName, mimeType: files[j].contentType };
+
+                        fileItem.buffer = documentFiles[fileItem.name] ? documentFiles[fileItem.name].buffer : null;
+                        fileItem.size = documentFiles[fileItem.name] ? documentFiles[fileItem.name].size : null;
+
+                        fileItems.push(fileItem);
+                    }
+
+                    result.push({
+                        fileItems: fileItems
+                    })
+                }
+            }
+            return result;
+        }
+
+        function getStaticDatas(kycprocess, requirementId) {
+            let result = [];
+            let answers = kycprocess.escrow.answers;
+            for (let i in answers) {
+                let answer = answers[i];
+                if (answer.requirementId == requirementId) {
+                    result = answer.answer;
+                }
+            }
+            return result;
+        }
+
+        function getStaticDataRequirements(kycprocess) {
+            let result = {};
+            kycprocess.requirements.questions.forEach((item) => {
+                if (!result[item.attributeType]) {
+                    result[item.attributeType] = {
+                        _id: item._id,
+                        attributeType: item.attributeType
+                    };
+                }
+            });
+
+            return result;
+        }
+
+        function getDocumentRequirements(kycprocess) {
+            let result = {};
+            kycprocess.requirements.uploads.forEach((item) => {
+                if (item.attributeType) {
+                    if (!result[item.attributeType]) {
+                        result[item.attributeType] = {
+                            _id: item._id,
+                            attributeType: item.attributeType
+                        };
+                    }
+                }
+            });
+
+            return result;
+        }
+
+        try {
+            let dialogConfig = {
+                title: 'Import KYC Package',
+                message: 'Choose file',
+                properties: ['openFile'],
+                filters: [
+                    { name: 'Archive', extensions: ['zip'] },
+                ],
+                maxFileSize: 50 * 1000 * 1000
+            };
+
+            dialog.showOpenDialog(app.win, dialogConfig, async (filePaths) => {
+                if (filePaths && filePaths[0]) {
+                    try {
+
+                        let files = await decompress(filePaths[0], os.tmpdir());
+                        let documentFiles = {};
+
+                        files.forEach((file) => {
+                            if (['export_code', 'kycprocess.json'].indexOf(file.path) > 0) {
+                                return false;
+                            }
+                            documentFiles[file.path] = {
+                                buffer: file.data,
+                                size: file.data.byteLength
+                            };
+                        });
+
+                        // searching for the json file
+                        const kycprocessJSONFile = files.find((file) => {
+                            if (file.path == "kycprocess.json") {
+                                return true;
+                            }
+                            return false;
+                        });
+
+                        // searching for the export_code file
+                        const exportCodeFile = files.find((file) => {
+                            if (file.path == "export_code") {
+                                return true;
+                            }
+                            return false;
+                        });
+
+                        const exportCode = exportCodeFile.data.toString('utf8');
+                        const kycprocess = JSON.parse(kycprocessJSONFile.data.toString('utf8'));
+
+                        let requiredDocuments = getDocumentRequirements(kycprocess);
+                        let requiredStaticData = getStaticDataRequirements(kycprocess);
+
+                        for (let i in requiredDocuments) {
+                            let docs = getDocs(kycprocess, requiredDocuments[i]._id, documentFiles);
+                            requiredDocuments[i].docs = docs;
+                        }
+
+                        for (let i in requiredStaticData) {
+                            let staticDatas = getStaticDatas(kycprocess, requiredStaticData[i]._id);
+                            requiredStaticData[i].staticDatas = staticDatas;
+                        }
+
+                        if (kycprocess.user.firstName) {
+                            requiredStaticData['first_name'] = {
+                                attributeType: 'first_name',
+                                staticDatas: [kycprocess.user.firstName]
+                            };
+                        }
+
+                        if (kycprocess.user.lastName) {
+                            requiredStaticData['last_name'] = {
+                                attributeType: 'last_name',
+                                staticDatas: [kycprocess.user.lastName]
+                            };
+                        }
+
+                        if (kycprocess.user.middleName) {
+                            requiredStaticData['middle_name'] = {
+                                attributeType: 'middle_name',
+                                staticDatas: [kycprocess.user.middleName]
+                            };
+                        }
+
+                        if (kycprocess.user.email) {
+                            requiredStaticData['email'] = {
+                                attributeType: 'email',
+                                staticDatas: [kycprocess.user.email]
+                            };
+                        }
+
+                        let data = electron.app.sqlLite.idAttribute.addImportedIdAttributes(
+                            args.walletId,
+                            exportCode,
+                            requiredDocuments,
+                            requiredStaticData
+                        );
+
+                        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+                    } catch (e) {
+                        app.win.webContents.send(RPC_METHOD, actionId, actionName, 'error', null);
+                    }
+                } else {
+                    app.win.webContents.send(RPC_METHOD, actionId, actionName, null, null);
+                }
+            });
+        } catch (e) {
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, "error", null);
+        }
     }
 
     /**
@@ -539,188 +726,7 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, true);
     }
 
-    controller.prototype.importKYCPackage = function (event, actionId, actionName, args) {
-        function getDocs(kycprocess, requirementId, documentFiles) {
-            let result = [];
-            let documents = kycprocess.escrow.documents;
-            for (let i in documents) {
-                let document = documents[i];
-                if (document.requirementId == requirementId) {
 
-                    let fileItems = [];
-
-                    let files = document.doc.files;
-                    for (let j in files) {
-                        let file = files[j];
-                        let fileItem = { name: files[j].fileName, mimeType: files[j].contentType };
-
-                        fileItem.buffer = documentFiles[fileItem.name] ? documentFiles[fileItem.name].buffer : null;
-                        fileItem.size = documentFiles[fileItem.name] ? documentFiles[fileItem.name].size : null;
-
-                        fileItems.push(fileItem);
-                    }
-
-                    result.push({
-                        fileItems: fileItems
-                    })
-                }
-            }
-            return result;
-        }
-
-        function getStaticDatas(kycprocess, requirementId) {
-            let result = [];
-            let answers = kycprocess.escrow.answers;
-            for (let i in answers) {
-                let answer = answers[i];
-                if (answer.requirementId == requirementId) {
-                    result = answer.answer;
-                }
-            }
-            return result;
-        }
-
-        function getStaticDataRequirements(kycprocess) {
-            let result = {};
-            kycprocess.requirements.questions.forEach((item) => {
-                if (!result[item.attributeType]) {
-                    result[item.attributeType] = {
-                        _id: item._id,
-                        attributeType: item.attributeType
-                    };
-                }
-            });
-
-            return result;
-        }
-
-        function getDocumentRequirements(kycprocess) {
-            let result = {};
-            kycprocess.requirements.uploads.forEach((item) => {
-                if (item.attributeType) {
-                    if (!result[item.attributeType]) {
-                        result[item.attributeType] = {
-                            _id: item._id,
-                            attributeType: item.attributeType
-                        };
-                    }
-                }
-            });
-
-            return result;
-        }
-
-        try {
-            let dialogConfig = {
-                title: 'Import KYC Package',
-                message: 'Choose file',
-                properties: ['openFile'],
-                filters: [
-                    { name: 'Archive', extensions: ['zip'] },
-                ],
-                maxFileSize: 50 * 1000 * 1000
-            };
-
-            dialog.showOpenDialog(app.win, dialogConfig, (filePaths) => {
-                if (filePaths && filePaths[0]) {
-                    try {
-                        decompress(filePaths[0], os.tmpdir()).then(files => {
-                            let documentFiles = {};
-
-                            files.forEach((file) => {
-                                if (['export_code', 'kycprocess.json'].indexOf(file.path) > 0) {
-                                    return false;
-                                }
-                                documentFiles[file.path] = {
-                                    buffer: file.data,
-                                    size: file.data.byteLength
-                                };
-                            });
-
-                            // searching for the json file
-                            const kycprocessJSONFile = files.find((file) => {
-                                if (file.path == "kycprocess.json") {
-                                    return true;
-                                }
-                                return false;
-                            });
-
-                            // searching for the export_code file
-                            const exportCodeFile = files.find((file) => {
-                                if (file.path == "export_code") {
-                                    return true;
-                                }
-                                return false;
-                            });
-
-                            const exportCode = exportCodeFile.data.toString('utf8');
-                            const kycprocess = JSON.parse(kycprocessJSONFile.data.toString('utf8'));
-
-                            let requiredDocuments = getDocumentRequirements(kycprocess);
-                            let requiredStaticData = getStaticDataRequirements(kycprocess);
-
-                            for (let i in requiredDocuments) {
-                                let docs = getDocs(kycprocess, requiredDocuments[i]._id, documentFiles);
-                                requiredDocuments[i].docs = docs;
-                            }
-
-                            for (let i in requiredStaticData) {
-                                let staticDatas = getStaticDatas(kycprocess, requiredStaticData[i]._id);
-                                console.log("THE static data", staticDatas);
-                                requiredStaticData[i].staticDatas = staticDatas;
-                            }
-
-                            if (kycprocess.user.firstName) {
-                                requiredStaticData['first_name'] = {
-                                    attributeType: 'first_name',
-                                    staticDatas: [kycprocess.user.firstName]
-                                };
-                            }
-
-                            if (kycprocess.user.lastName) {
-                                requiredStaticData['last_name'] = {
-                                    attributeType: 'last_name',
-                                    staticDatas: [kycprocess.user.lastName]
-                                };
-                            }
-
-                            if (kycprocess.user.middleName) {
-                                requiredStaticData['middle_name'] = {
-                                    attributeType: 'middle_name',
-                                    staticDatas: [kycprocess.user.middleName]
-                                };
-                            }
-
-                            if (kycprocess.user.email) {
-                                requiredStaticData['email'] = {
-                                    attributeType: 'email',
-                                    staticDatas: [kycprocess.user.email]
-                                };
-                            }
-
-                            // ready - requiredDocuments, requiredStaticData, exportCode
-                            electron.app.sqlLiteService.IdAttribute.addImportedIdAttributes(
-                                args.walletId,
-                                exportCode,
-                                requiredDocuments,
-                                requiredStaticData
-                            ).then((data) => {
-                                app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-                            }).catch((error) => {
-                                app.win.webContents.send(RPC_METHOD, actionId, actionName, "error", null);
-                            })
-                        });
-                    } catch (e) {
-                        app.win.webContents.send(RPC_METHOD, actionId, actionName, 'error', null);
-                    }
-                } else {
-                    app.win.webContents.send(RPC_METHOD, actionId, actionName, null, null);
-                }
-            });
-        } catch (e) {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, "error", null);
-        }
-    }
 
 
     controller.prototype.installUpdate = function (event, actionId, actionName, args) {
@@ -770,10 +776,6 @@ module.exports = function (app) {
     }
     */
 
-
-
-
-
     controller.prototype.insertWalletToken = function (event, actionId, actionName, args) {
         electron.app.sqlLiteService.wallet_tokens_insert(args).then((data) => {
             app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
@@ -803,13 +805,7 @@ module.exports = function (app) {
      */
 
     // DONE !!!!!
-    controller.prototype.addEditDocumentToIdAttributeItemValue = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.IdAttribute.addEditDocumentToIdAttributeItemValue(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId, args.file).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
 
     // TODO .... test
     controller.prototype.editImportedIdAttributes = function (event, actionId, actionName, args) {
@@ -819,11 +815,6 @@ module.exports = function (app) {
             app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
         });
     }
-
-
-
-
-
 
     /**
      * Exchange data
