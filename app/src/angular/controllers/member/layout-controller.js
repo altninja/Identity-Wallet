@@ -3,7 +3,7 @@ const EthUtils = requireAppModule('angular/classes/eth-utils');
 const Token = requireAppModule('angular/classes/token');
 
 
-function MemberLayoutController($rootScope, $scope, $log, $mdDialog, $mdSidenav, $interval, $timeout, $state, Web3Service, EtherScanService) {
+function MemberLayoutController($rootScope, $scope, $log, $mdDialog, $mdSidenav, $interval, $timeout, $state, Web3Service, RPCService) {
     'ngInject'
 
     $scope.showScrollStyle = false;
@@ -17,7 +17,18 @@ function MemberLayoutController($rootScope, $scope, $log, $mdDialog, $mdSidenav,
         $scope.showScrollStyle = true;
     }
 
-    $log.info('MemberLayoutController');
+    $log.info('MemberLayoutController', OSName);
+
+    /**
+     * trigger airdrop (if its not trigger yet)
+     */
+    if($rootScope.wallet.airDropCode){
+        SelfkeyService.triggerAirdrop($rootScope.wallet.airDropCode).then(() => {
+            RPCService.makeCall('wallet_removeAirdropCode', { walletId: $rootScope.wallet.id, airDropCode: $rootScope.wallet.airDropCode }).then((wallet) => {
+                $rootScope.wallet.airDropCode = null;
+            });
+        });
+    }
 
     /**
      *

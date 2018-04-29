@@ -184,7 +184,7 @@ function itemValueDeletePanel($rootScope, $scope, $log, mdPanelRef, CommonServic
     $scope.promise = null;
 
     $scope.delete = (event) => {
-        $scope.promise = RPCService.makeCall('deleteIdAttribute', {
+        $scope.promise = RPCService.makeCall('idAttribute_delete', {
             idAttributeId: idAttribute.id,
             idAttributeItemId: idAttribute.items[0].id,
             idAttributeItemValueId: idAttribute.items[0].values[0].id,

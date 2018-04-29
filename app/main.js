@@ -194,10 +194,7 @@ function onReady(app) {
 
             app.win.webContents.send('APP_SUCCESS_LOADING', {appSettings: appSettings});
 
-            //name, publicKey, keystoreFilePath
-            //let result = await electron.app.sqlLite.wallet.add("Test Wallet", "0x0001testPublicKey", "testkeystoreFilePath");
-            //console.log("TEST RESULT", result);
-
+            
             /*
 
             electron.app.sqlLiteService.init().then(async () => {

@@ -10,7 +10,7 @@ module.exports = function (knex, knexHelper) {
     Controller.create = _create;
     Controller.delete = _delete;
 
-    Controller.selectById = selectById;
+    //Controller.selectById = selectById;
 
     Controller.addEditDocumentToIdAttributeItemValue = _addEditDocumentToIdAttributeItemValue;
     Controller.addEditStaticDataOfIdAttributeItemValue = _addEditStaticDataOfIdAttributeItemValue;
@@ -158,29 +158,21 @@ module.exports = function (knex, knexHelper) {
     }
 
     async function _delete(idAttributeId, idAttributeItemId, idAttributeItemValueId) {
-        return knex.transaction((trx) => {
-            let selectPromise = knex(TABLE_NAME).transacting(trx).select().where('id', idAttributeId);
-            selectPromise.then((rows) => {
-                return new Promise((resolve, reject) => {
-                    let idAttribute = rows[0];
+        let tx = await helpers.promisify(knex.transaction);
+        try {
+            let idAttributes = await knex(TABLE_NAME).transacting(tx).select().where({'id': idAttributeId});
+            let idAttribute = idAttributes[0];
 
-                    let promises = [];
+            let value = helpers.getIdAttributeItemValue(idAttribute, idAttributeItemId, idAttributeItemValueId);
+            if (value && value.documentId) {
+                await knex('documents').transacting(tx).del().where({'id': value.documentId});
+            }
 
-                    let value = helpers.getIdAttributeItemValue(idAttribute, idAttributeItemId, idAttributeItemValueId);
-                    if (value && value.documentId) {
-                        promises.push(knex('documents').transacting(trx).del().where('id', value.documentId));
-                    }
-
-                    promises.push(knex('id_attributes').transacting(trx).del().where('id', idAttribute.id));
-
-                    Promise.all(promises).then((responses) => {
-                        resolve();
-                    }).catch((error) => {
-                        reject();
-                    });
-                });
-            }).then(trx.commit).catch(trx.rollback);
-        });
+            await knex(TABLE_NAME).transacting(tx).del().where({'id': idAttribute.id});
+            tx.commit();
+        } catch (e) {
+            throw 'error';
+        }
     }
 
     // DONE !!!!!
@@ -364,14 +356,6 @@ module.exports = function (knex, knexHelper) {
             }
         }
         return false;
-    }
-
-    function __insert(idAttribute, trx) {
-        return sqlLiteService.insertAndSelect(TABLE_NAME, idAttribute, trx);
-    }
-
-    async function _insertAndSelect(idAttribute, trx) {
-        return sqlLiteService.insertAndSelect(TABLE_NAME, idAttribute, trx);
     }
 
     return Controller;

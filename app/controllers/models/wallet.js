@@ -16,9 +16,10 @@ module.exports = function (knex) {
     Controller.findByPublicKey = _findByPublicKey;
     Controller.findById = _findById;
     Controller.updateProfilePicture = _updateProfilePicture;
+    Controller.removeAirdropCode = _removeAirdropCode;
+
 
     /*
-    Controller.findActive = _findActive;
     Controller.editImportedIdAttributes = _editImportedIdAttributes;
     */
 
@@ -130,6 +131,24 @@ module.exports = function (knex) {
         }
     }
 
+    async function _removeAirdropCode (walletId, airDropCode) {
+        try {
+            let wallets = await knex(TABLE_NAME).select().where({'id': walletId});
+            let wallet = wallets[0];
+
+            if(wallet.airDropCode != airDropCode){
+                throw 'wrong_airdrop_code';
+            }
+
+            wallet.airDropCode = null;
+
+            await knex(TABLE_NAME).update(wallet).where({'id': walletId})
+            return wallet;
+        } catch (e) {
+            throw 'error';
+        }
+    }
+
     async function _findById(id) {
         try {
             let rows = await knex(TABLE_NAME).select().where({ id: id });
@@ -234,22 +253,6 @@ module.exports = function (knex) {
             }).then(trx.commit).catch(trx.rollback);
         });
     }
-
-    async function _findActive() {
-        try {
-            return await sqlLiteService.select(TABLE_NAME, '*', { isSetupFinished: 1 });
-        } catch (e) {
-            throw 'findActive_error';
-        }
-    }
-
-
-
-
-
-
-
-
     */
 
     return Controller;

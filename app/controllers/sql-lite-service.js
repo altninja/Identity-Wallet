@@ -78,7 +78,7 @@ module.exports = function (app) {
     controller.prototype.init = () => {
         let promises = [];
 
-        
+
         promises.push(Document.init());
         promises.push(IdAttributeType.init());
         promises.push(Token.init());
@@ -172,9 +172,6 @@ module.exports = function (app) {
     /**
      * tokens
      */
-    controller.prototype.tokens_selectBySymbol = (symbol) => {
-        return selectTable('tokens', { symbol: 'eth' });
-    }
 
     controller.prototype.token_insert = (data) => {
         return insertIntoTable('tokens', data);

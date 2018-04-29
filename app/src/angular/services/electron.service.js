@@ -47,10 +47,6 @@ function ElectronService($rootScope, $window, $q, $timeout, $log, CONFIG, RPCSer
             return RPCService.makeCall('moveFile', { src: src, dest: dest, copy: true });
         }
 
-        this.checkFileStat = function (filePath) {
-            return RPCService.makeCall('checkFileStat', { src: filePath });
-        }
-
         this.openDirectorySelectDialog = function () {
             return RPCService.makeCall('openDirectorySelectDialog', null);
         }

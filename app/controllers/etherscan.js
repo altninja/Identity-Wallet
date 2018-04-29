@@ -64,6 +64,7 @@ module.exports = function (app) {
         //return null;
 
         // Step 1: select wallets
+        /*
         let wallets = await electron.app.sqlLiteService.Wallet.findActive();
 
         for(let wallet of wallets) {
@@ -80,6 +81,7 @@ module.exports = function (app) {
 
             let tokensTxList = loadTxHistory("0x" + wallet.publicKey, 1);
         }
+        */
     };
 
     return controller;

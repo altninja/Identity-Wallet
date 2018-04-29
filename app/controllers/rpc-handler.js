@@ -177,6 +177,11 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, wallet);
     }
 
+    controller.prototype.wallet_removeAirdropCode = async function (event, actionId, actionName, args) {
+        let wallet = await electron.app.sqlLite.wallet.removeAirdropCode(args.id, args.airdropCode);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, wallet);
+    }
+
     /**
      * IdAttributeTypes
      */
@@ -213,6 +218,11 @@ module.exports = function (app) {
 
     controller.prototype.idAttribute_addEditStaticDataOfIdAttributeItemValue = async function (event, actionId, actionName, args) {
         let data = await electron.app.sqlLite.idAttribute.addEditStaticDataOfIdAttributeItemValue(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId, args.staticData);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
+
+    controller.prototype.idAttribute_delete = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.idAttribute.delete(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId);
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
@@ -395,6 +405,7 @@ module.exports = function (app) {
 
     controller.prototype.openFileViewer = function (event, actionId, actionName, args) {
         try {
+            // TODO remove
             function onClose() {
                 try {
                     let files = fsm.readdirSync(documentsDirectoryPath);
@@ -425,19 +436,6 @@ module.exports = function (app) {
             });
         } catch (e) {
             log.error(e);
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
-        }
-    }
-
-    controller.prototype.checkFileStat = function (event, actionId, actionName, args) {
-        try {
-            fs.stat(args.src, (err, stat) => {
-                if (stat) {
-                    stat.path = args.src;
-                }
-                app.win.webContents.send(RPC_METHOD, actionId, actionName, err, stat);
-            });
-        } catch (e) {
             app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
         }
     }
@@ -541,22 +539,7 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, true);
     }
 
-    /**
-     * sql-lite methods
-     */
-    controller.prototype.loadDocumentById = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Document.findById(args.documentId).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            log.error(error);
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-
-
-
     controller.prototype.importKYCPackage = function (event, actionId, actionName, args) {
-
         function getDocs(kycprocess, requirementId, documentFiles) {
             let result = [];
             let documents = kycprocess.escrow.documents;
@@ -716,7 +699,6 @@ module.exports = function (app) {
                             }
 
                             // ready - requiredDocuments, requiredStaticData, exportCode
-
                             electron.app.sqlLiteService.IdAttribute.addImportedIdAttributes(
                                 args.walletId,
                                 exportCode,
@@ -754,48 +736,6 @@ module.exports = function (app) {
         });
     }
 
-    /**
-     * SQL Lite
-     */
-
-
-
-
-
-
-    controller.prototype.saveWallet = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Wallet.add(args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-
-    controller.prototype.findActiveWallets = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.Wallet.findActive().then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-
-
-
-
-
-
-
-    controller.prototype.getWalletByPublicKey = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.wallets_selectByPublicKey(args.publicKey).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-
-
-
-
 
     // NEED TEST
     /*
@@ -830,23 +770,9 @@ module.exports = function (app) {
     }
     */
 
-    /*
-    controller.prototype.getWalletSettingsByWalletId = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.WalletSetting.findByWalletId(args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-    */
 
-    controller.prototype.saveWalletSettings = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.WalletSetting.edit(args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
+
 
     controller.prototype.insertWalletToken = function (event, actionId, actionName, args) {
         electron.app.sqlLiteService.wallet_tokens_insert(args).then((data) => {
@@ -885,24 +811,6 @@ module.exports = function (app) {
         });
     }
 
-    // DONE !!!!!
-
-
-    // DONE !!!!!
-
-
-    // DONE !!!!!
-
-
-    // DONE !!!!!
-    controller.prototype.deleteIdAttribute = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.IdAttribute.delete(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
-
     // TODO .... test
     controller.prototype.editImportedIdAttributes = function (event, actionId, actionName, args) {
         electron.app.sqlLiteService.Wallet.editImportedIdAttributes(args.walletId, args.initialIdAttributesValues).then((data) => {
@@ -911,6 +819,9 @@ module.exports = function (app) {
             app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
         });
     }
+
+
+
 
 
 
@@ -924,30 +835,6 @@ module.exports = function (app) {
             app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
         });
     }
-
-    controller.prototype.loadObligatoryIcons = (event, actionId, actionName, args) => {
-        const iconList = config.obligatoryImageIds;
-        async.each(iconList, function (item, callback) {
-            electron.app.sqlLiteService.tokens_selectBySymbol(item).then(data => {
-                if (data) {
-                    if (!data.icon) {
-                        //TODO get image and update existing one
-                    }
-                } else {
-                    //TODO insert ot continue ???
-                }
-            }).catch(err => {
-                callback(err);
-            });
-        }, function (err) {
-            if (err) {
-                app.win.webContents.send('ON_ASYNC_REQUEST', actionId, actionName, err, null);
-            } else {
-                app.win.webContents.send('ON_ASYNC_REQUEST', actionId, actionName, null, true);
-            }
-        });
-    };
-
 
     return controller;
 }

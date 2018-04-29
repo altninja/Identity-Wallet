@@ -161,10 +161,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             return TOKENS_STORE;
         }
 
-        saveWallet(data) {
-            return RPCService.makeCall('saveWallet', data);
-        }
-
         /**
          * wallet_tokens
          */
@@ -233,13 +229,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         }
 
         /**
-         *
-         */
-        loadDocumentById(documentId) {
-            return RPCService.makeCall('loadDocumentById', { documentId: documentId });
-        }
-
-        /**
          * token_prices
          */
         getTokenPrices() {
@@ -258,10 +247,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
          *
          * wallet settings
          */
-        getWalletSettingsByWalletId(data) {
-            return RPCService.makeCall('getWalletSettingsByWalletId', data);
-        }
-
         insertTransactionHistory(data) {
             return RPCService.makeCall('insertTransactionHistory', data);
         }
@@ -274,14 +259,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             return RPCService.makeCall('getTransactionsHistoryByWalletIdAndTokenId', { walletId: walletId, tokenId: tokenId });
         }
 
-        saveWalletSettings(data) {
-            return RPCService.makeCall('saveWalletSettings', data);
-        }
-
-        removeAirdropCode(walletSetting) {
-            walletSetting.airDropCode = null;
-            return RPCService.makeCall('saveWalletSettings', walletSetting);
-        }
 
         insertWalletToken(data) {
             return RPCService.makeCall('insertWalletToken', data);

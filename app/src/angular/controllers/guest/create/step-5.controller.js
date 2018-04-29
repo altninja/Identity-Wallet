@@ -10,13 +10,16 @@ function GuestKeystoreCreateStep5Controller($rootScope, $scope, $log, $state, $s
     }
 
     $scope.importKycFile = (event) => {
-        RPCService.makeCall('importKYCPackage', { walletId: $rootScope.wallet.id }).then((walletSetting) => {
+        RPCService.makeCall('importKYCPackage', { walletId: $rootScope.wallet.id }).then((data) => {
             //on cancel choose a file
-            if (!walletSetting) {
+            if (!data) {
                 return;
             }
-            SelfkeyService.triggerAirdrop(walletSetting.airDropCode).then(()=>{
-                SqlLiteService.removeAirdropCode(walletSetting);
+
+            SelfkeyService.triggerAirdrop(data.airDropCode).then(() => {
+                RPCService.makeCall('wallet_removeAirdropCode', { walletId: $rootScope.wallet.id, airDropCode: data.airDropCode }).then((wallet) => {
+                    $rootScope.wallet.airDropCode = null;
+                });
             });
 
             $rootScope.wallet.loadIdAttributes().then(() => {
@@ -26,8 +29,6 @@ function GuestKeystoreCreateStep5Controller($rootScope, $scope, $log, $state, $s
             CommonService.showToast('error', 'Error');
         });
     }
-
-
 };
 
 module.exports = GuestKeystoreCreateStep5Controller;
