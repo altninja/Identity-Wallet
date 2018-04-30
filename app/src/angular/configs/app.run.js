@@ -36,6 +36,7 @@ function AppRun($rootScope, $log, $window, $timeout, $interval, $q, $state, $tra
     Wallet.SqlLiteService = SqlLiteService;
     Wallet.CommonService = CommonService;
     Wallet.EtherScanService = EtherScanService;
+    Wallet.RPCService = RPCService;
 
     Token.$rootScope = $rootScope;
     Token.$q = $q;

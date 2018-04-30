@@ -205,12 +205,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             return EXCHANGE_DATA;
         }
 
-        /**
-         * id_attributes
-         */
-        loadIdAttributes(walletId) {
-            return RPCService.makeCall('getIdAttributes', { walletId: walletId });
-        }
+        
 
         /**
          *

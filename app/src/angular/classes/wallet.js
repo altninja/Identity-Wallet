@@ -4,7 +4,7 @@ const EthUnits = requireAppModule('angular/classes/eth-units');
 const EthUtils = requireAppModule('angular/classes/eth-utils');
 const Token = requireAppModule('angular/classes/token');
 
-let $rootScope, $q, $interval, Web3Service, CommonService, ElectronService, SqlLiteService, EtherScanService;
+let $rootScope, $q, $interval, Web3Service, CommonService, ElectronService, SqlLiteService, EtherScanService, RPCService;
 
 let readyToShowNotification = false;
 
@@ -20,6 +20,8 @@ class Wallet {
     static set ElectronService(value) { ElectronService = value; } // TODO remove (use RPCService instead)
     static set SqlLiteService(value) { SqlLiteService = value; }
     static set EtherScanService(value) { EtherScanService = value; }
+    static set RPCService(value) { RPCService = value; }
+
 
     constructor(id, privateKey, publicKey, keystoreFilePath) {
         this.id = id;
@@ -94,7 +96,7 @@ class Wallet {
             if (balanceWei !== oldBalanceInWei) {
                 $rootScope.$broadcast('balance:change', 'eth', this.balanceEth, this.balanceInUsd);
                 if (readyToShowNotification) {
-                    ElectronService.showNotification('ETH Balance Changed', 'New Balance: ' + this.balanceEth);
+                    //ElectronService.showNotification('ETH Balance Changed', 'New Balance: ' + this.balanceEth);
                 }
             }
 
@@ -182,6 +184,7 @@ class Wallet {
     loadTokens() {
         let defer = $q.defer();
         SqlLiteService.loadWalletTokens(this.id).then((walletTokens) => {
+            console.log("111", walletTokens);
             this.tokens = {};
             for (let i in walletTokens) {
                 let token = walletTokens[i];
@@ -189,6 +192,7 @@ class Wallet {
             }
             defer.resolve(this.tokens);
         }).catch((error) => {
+            console.log("111", error);
             defer.reject(error);
         });
 
@@ -206,8 +210,7 @@ class Wallet {
      */
     loadIdAttributes() {
         let defer = $q.defer();
-
-        SqlLiteService.loadIdAttributes(this.id).then((idAttributes) => {
+        RPCService.makeCall('idAttribute_findByWalletId', { walletId: this.id }).then((idAttributes) => {
             this.idAttributes = {};
 
             for (let i in idAttributes) {

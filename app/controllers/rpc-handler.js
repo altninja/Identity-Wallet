@@ -206,7 +206,7 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
-    controller.prototype.getIdAttributes = async function (event, actionId, actionName, args) {
+    controller.prototype.idAttribute_findByWalletId = async function (event, actionId, actionName, args) {
         let data = await electron.app.sqlLite.idAttribute.findAllByWalletId(args.walletId);
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
@@ -221,12 +221,9 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
-    controller.prototype.idAttribute_addEditDocumentOfIdAttributeItemValue = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.IdAttribute.addEditDocumentToIdAttributeItemValue(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId, args.file).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
+    controller.prototype.idAttribute_addEditDocumentOfIdAttributeItemValue = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.idAttribute.addEditDocumentOfIdAttributeItemValue(args.idAttributeId, args.idAttributeItemId, args.idAttributeItemValueId, args.file)
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
     controller.prototype.idAttribute_delete = async function (event, actionId, actionName, args) {
@@ -438,6 +435,27 @@ module.exports = function (app) {
         app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
     }
 
+    /**
+     * Documents
+     */
+    controller.prototype.openFileViewer = async function (event, actionId, actionName, args) {
+        try {
+            let data = await electron.app.sqlLite.document.findById(args.documentId);
+            const filePathToPreview = path.join(documentsDirectoryPath, data.name);
+            try {
+                fsm.appendFileSync(filePathToPreview, new Buffer(data.buffer));
+            } catch (e) {
+                log.error(e);
+                return app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
+            }
+
+            shell.openExternal(`file://${filePathToPreview}`);
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, null);
+        } catch (e) {
+            log.error(e);
+            app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
+        }
+    }
 
 
 
@@ -585,47 +603,11 @@ module.exports = function (app) {
                 }
             });
         } catch (e) {
-            console.log("3333")
             app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
         }
     }
 
-    controller.prototype.openFileViewer = function (event, actionId, actionName, args) {
-        try {
-            // TODO remove
-            function onClose() {
-                try {
-                    let files = fsm.readdirSync(documentsDirectoryPath);
-                    for (const file of files) {
-                        fsm.unlinkSync(path.join(documentsDirectoryPath, file));
-                    }
-                } catch (e) {
-                    return app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
-                }
-            }
 
-            electron.app.sqlLiteService.Document.findById(args.documentId).then((data) => {
-                const filePathToPreview = path.join(documentsDirectoryPath, data.name);
-
-                try {
-                    fsm.appendFileSync(filePathToPreview, new Buffer(data.buffer));
-                } catch (e) {
-                    log.error(e);
-                    return app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
-                }
-
-                shell.openExternal(`file://${filePathToPreview}`);
-
-                app.win.webContents.send(RPC_METHOD, actionId, actionName, null, null);
-            }).catch((error) => {
-                log.error(error);
-                app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-            });
-        } catch (e) {
-            log.error(e);
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null);
-        }
-    }
 
     controller.prototype.openDirectorySelectDialog = function (event, actionId, actionName, args) {
         try {

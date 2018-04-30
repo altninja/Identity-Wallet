@@ -12,7 +12,7 @@ module.exports = function (knex, knexHelper) {
 
     //Controller.selectById = selectById;
 
-    Controller.addEditDocumentToIdAttributeItemValue = _addEditDocumentToIdAttributeItemValue;
+    Controller.addEditDocumentOfIdAttributeItemValue = _addEditDocumentOfIdAttributeItemValue;
     Controller.addEditStaticDataOfIdAttributeItemValue = _addEditStaticDataOfIdAttributeItemValue;
 
     Controller.findAllByWalletId = _findAllByWalletId;
@@ -52,7 +52,28 @@ module.exports = function (knex, knexHelper) {
         }
     }
 
-    async function _addEditDocumentToIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, file) {
+    async function _addEditDocumentOfIdAttributeItemValue(idAttributeId, idAttributeItemId, idAttributeItemValueId, file) {
+        let rows = await knex(TABLE_NAME).select().where({ id: idAttributeId });
+        if (!rows || !rows.length) {
+            throw "id_attribute_not_found";
+        }
+        let idAttribute = rows[0];
+
+        idAttribute.items = JSON.parse(idAttribute.items);
+
+        let item = helpers.getRecordById(idAttribute.items, idAttributeItemId);
+        if (!item) {
+            throw "id_attribute_item_not_found";
+        }
+
+        if (!item.values || !item.values.length) {
+            throw "id_attribute_item_value_not_found";
+        }
+
+        let value = helpers.getRecordById(item.values, idAttributeItemValueId);
+        if(!value){
+            throw "value_not_found";
+        }
 
         let tx = await helpers.promisify(knex.transaction);
 
@@ -65,24 +86,6 @@ module.exports = function (knex, knexHelper) {
                 createdAt: new Date().getTime()
             };
 
-            let rows = await knex(TABLE_NAME).transacting(tx).select().where({ id: idAttributeId });
-            if (!rows || !rows.length) {
-                throw "id_attribute_not_found";
-            }
-            let idAttribute = rows[0];
-            idAttribute.items = JSON.parse(idAttribute.items);
-
-            let item = helpers.getRecordById(idAttribute.items, idAttributeItemId);
-            if (!item) {
-                throw "id_attribute_item_not_found";
-            }
-
-            if (!item.values || !item.values.length) {
-                throw "id_attribute_item_value_not_found";
-            }
-
-            let value = helpers.getRecordById(item.values, idAttributeItemValueId);
-
             if (value.documentId) {
                 document.id = value.documentId;
                 document.updatedAt = new Date().getTime();
@@ -90,9 +93,11 @@ module.exports = function (knex, knexHelper) {
             } else {
                 let insertedIds = await knex('documents').transacting(tx).insert(document);
                 value.documentId = insertedIds[0];
-                idAttribute.items = JSON.stringify(idAttribute.items);
-                await knex(TABLE_NAME).transacting(tx).update(idAttribute).where({ 'id': idAttribute.id });
             }
+
+            value.documentName = document.name;
+            idAttribute.items = JSON.stringify(idAttribute.items);
+            await knex(TABLE_NAME).transacting(tx).update(idAttribute).where({ 'id': idAttribute.id });
 
             tx.commit();
             return idAttribute;
