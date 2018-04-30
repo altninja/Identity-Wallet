@@ -28,11 +28,10 @@ function GuestImportPrivateKeyController($rootScope, $scope, $log, $q, $timeout,
             privateKey = "0x" + $scope.userInput.privateKey;
         }
 
-        let importPromise = RPCService.makeCall('importPrivateKey', { privateKey: privateKey });
+        let importPromise = RPCService.makeCall('wallet_importPrivateKey', { privateKey: privateKey });
         importPromise.then((data) => {
             if (data.id) {
                 $rootScope.wallet = new Wallet(data.id, data.privateKey, data.publicKey);
-
 
                 let initialPromises = [];
                 initialPromises.push($rootScope.wallet.loadIdAttributes());
@@ -48,7 +47,6 @@ function GuestImportPrivateKeyController($rootScope, $scope, $log, $q, $timeout,
                             $state.go('guest.create.step-4');
                         }
                     }
-
                 }).catch((error) => {
                     CommonService.showToast('error', 'error');
                 });

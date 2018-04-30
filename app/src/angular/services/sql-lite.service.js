@@ -15,9 +15,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
     let COUNTRIES = [];
     let EXCHANGE_DATA = [];
 
-    // APP_SETTINGS = {}
-    // WALLET_SETTINGS = {}
-
     let tokenPriceUpdaterInterval = null;
 
     class SqlLiteService {
@@ -62,7 +59,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
          *
          */
         loadTokens() {
-            return RPCService.makeCall('getTokens', null).then((tokens) => {
+            return RPCService.makeCall('token_findAll', null).then((tokens) => {
                 if (tokens) {
                     for (let i in tokens) {
                         let item = tokens[i];
@@ -73,7 +70,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         }
 
         loadIdAttributeTypes() {
-            return RPCService.makeCall('getIdAttributeTypes', null).then((idAttributeTypes) => {
+            return RPCService.makeCall('idAttributeType_findAll', null).then((idAttributeTypes) => {
                 if (idAttributeTypes) {
                     for (let i in idAttributeTypes) {
                         let item = idAttributeTypes[i];
@@ -97,7 +94,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         }
 
         loadWallets() {
-            return RPCService.makeCall('findAllWallets', null).then((wallets) => {
+            return RPCService.makeCall('wallet_findAllWallets', null).then((wallets) => {
                 if (wallets) {
                     for (let i in wallets) {
                         let item = wallets[i];
@@ -162,13 +159,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
         }
 
         /**
-         * wallet_tokens
-         */
-        loadWalletTokens(walletId) {
-            return RPCService.makeCall('getWalletTokens', { walletId: walletId });
-        }
-
-        /**
          * app_settings
          */
         getAppSettings() {
@@ -205,8 +195,6 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
             return EXCHANGE_DATA;
         }
 
-        
-
         /**
          *
          */
@@ -216,11 +204,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
                 title: title || "untitled",
                 content: actionText
             }
-            return RPCService.makeCall('actionLogs_add', theAction);
-        }
-
-        loadWalletHistory(walletId) {
-            return RPCService.makeCall('actionLogs_findAll', { walletId: walletId });
+            return RPCService.makeCall('actionLog_add', theAction);
         }
 
         /**

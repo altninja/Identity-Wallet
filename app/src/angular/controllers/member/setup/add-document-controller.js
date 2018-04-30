@@ -52,22 +52,17 @@ function MemberSetupAddDocumentController($rootScope, $scope, $log, $state, $tim
             idAttributeItemValueId: $scope.idAttributes[$scope.selected.type].items[0].values[0].id
         };
 
-        let addDocumentPromise = RPCService.makeCall('openDocumentAddDialog', args);
+        let addDocumentPromise = RPCService.makeCall('document_openAddDialog', args);
         addDocumentPromise.then((resp) => {
             if(!resp) return;
 
             $rootScope.wallet.loadIdAttributes().then((resp)=>{
                 $scope.idAttributes = $rootScope.wallet.getIdAttributes();
-                //CommonService.showToast('success', 'File successfully saved.');
                 $scope.snackbar('success','File successfully saved.', true);
                 $scope.selected.values = "Saved!";
-
                 SqlLiteService.registerActionLog(actionText + $rootScope.DICTIONARY[$stateParams.type], actionTitle);
-
-                //goToNextStep();
             });
         }).catch((error) => {
-            //CommonService.showToast('error', 'File size is over 50MB. Please upload a smaller file.');
             $scope.snackbar('error','File size is over 50MB. Please upload a smaller file.', true);
         });
     }

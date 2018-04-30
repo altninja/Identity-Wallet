@@ -24,7 +24,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
     }
 
     $scope.selectKystoreFile = (event, theForm) => {
-        let promise = RPCService.makeCall('openKeystoreFileSelectDialog');
+        let promise = RPCService.makeCall('wallet_openKeystoreFileSelectDialog');
         promise.then((data) => {
             $rootScope.walletImportData = data;
         }).catch((error) => {
@@ -60,7 +60,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
                 });
             }
         } else if ($scope.type === 'import') {
-            let promise = RPCService.makeCall('importKeystoreFile', {
+            let promise = RPCService.makeCall('wallet_importKeystoreFile', {
                 keystoreFilePath: $rootScope.walletImportData.keystoreFilePath,
                 password: $scope.userInput.password
             });
@@ -89,7 +89,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
     function unlockExistingWallet(publicKey, password) {
         let defer = $q.defer();
 
-        let unlockExistingWalletPromise = RPCService.makeCall('unlockKeystoreFile', {
+        let unlockExistingWalletPromise = RPCService.makeCall('wallet_unlockKeystoreFile', {
             publicKey: publicKey,
             password: password
         });

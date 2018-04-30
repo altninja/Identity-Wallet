@@ -95,7 +95,7 @@ function SkUserInfoBoxDirective($rootScope, $log, $window, $timeout, $filter, Sq
                     id: $rootScope.wallet.id,
                     profilePicture: profilePicture
                 }
-                RPCService.makeCall('updateWalletProfilePicture', data).then((res) => {
+                RPCService.makeCall('wallet_updateWalletProfilePicture', data).then((res) => {
                     updateProfilePictureStyles(res.profilePicture);
                 }).catch((err) => {
                     CommonService.showToast('error', 'Error while saving the file');

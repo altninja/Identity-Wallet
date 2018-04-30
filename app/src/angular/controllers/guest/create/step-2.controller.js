@@ -48,7 +48,7 @@ function GuestKeystoreCreateStep2Controller($rootScope, $scope, $log, $q, $state
     function createKeystore() {
         let defer = $q.defer();
 
-        let promise = RPCService.makeCall('createKeystoreFile', { password: $scope.input.password });
+        let promise = RPCService.makeCall('wallet_createKeystoreFile', { password: $scope.input.password });
 
         promise.then((data) => {
             $rootScope.wallet = new Wallet(data.id, data.privateKey, data.publicKey, data.keystoreFilePath);

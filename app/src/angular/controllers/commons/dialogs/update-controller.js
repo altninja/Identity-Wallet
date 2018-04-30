@@ -14,7 +14,7 @@ function UpdateDialogController($rootScope, $scope, $log, $q, $mdDialog, release
 
     $scope.update = (event) => {
         /*
-        $scope.updatePromise = ElectronService.installUpdate();
+        $scope.updatePromise = RPCService.makeCall('installUpdate', {});
         $scope.updatePromise.then(() => {
             $mdDialog.hide();
         });

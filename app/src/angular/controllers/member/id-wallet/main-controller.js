@@ -113,7 +113,7 @@ function MemberIdWalletMainController($rootScope, $scope, $log, $timeout, $mdDia
 
     $scope.openFilePreview = (event, item) => {
         if (item && item.documentId) {
-            RPCService.makeCall('openFileViewer', { documentId: item.documentId });
+            RPCService.makeCall('document_openFileViewer', { documentId: item.documentId });
         } else {
             CommonService.showToast('error', 'documentId is missing');
         }
@@ -159,7 +159,7 @@ function MemberIdWalletMainController($rootScope, $scope, $log, $timeout, $mdDia
     }
 
     function loadWalletHistory() {
-        SqlLiteService.loadWalletHistory($rootScope.wallet.id).then((data) => {
+        RPCService.makeCall('actionLog_findByWalletId', { walletId: $rootScope.wallet.id }).then((data) => {
             $scope.walletHistoryList = data.reverse();
         });
     }
