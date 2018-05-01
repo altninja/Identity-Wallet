@@ -656,7 +656,7 @@ module.exports = function (app) {
                                 size: stats.size
                             }
 
-                            let resp = await electron.app.sqlLite.idAttribute.addEditDocumentToIdAttributeItemValue(
+                            let resp = await electron.app.sqlLite.idAttribute.addEditDocumentOfIdAttributeItemValue(
                                 args.idAttributeId,
                                 args.idAttributeItemId,
                                 args.idAttributeItemValueId,
@@ -674,19 +674,13 @@ module.exports = function (app) {
         }
     }
 
-
-
-
-
-
-    // refactored
-
-
-
-
-
-
-
+    /**
+     * ExchangeMarkets
+     */
+    controller.prototype.exchangeMarket_findAll = async function (event, actionId, actionName, args) {
+        let data = await electron.app.sqlLite.exchangeMarket.findAll(args);
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
+    }
 
 
 
@@ -771,16 +765,7 @@ module.exports = function (app) {
         });
     }
 
-    /**
-     * Exchange data
-     */
-    controller.prototype.findAllExchangeData = function (event, actionId, actionName, args) {
-        electron.app.sqlLiteService.ExchangeDataHandler.findAll(args).then((data) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, null, data);
-        }).catch((error) => {
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, error, null);
-        });
-    }
+
 
     return controller;
 }

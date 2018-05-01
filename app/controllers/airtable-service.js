@@ -11,7 +11,6 @@ module.exports = function (app) {
 
     const controller = function () { };
 
-    // TODO ... need to find items to (add/edit/remove)
     controller.prototype.loadIdAttributeTypes = async () => {
         const url = AIRTABLE_API + "id-attributes";
         let result = await _makeRequest("get", url);
@@ -24,31 +23,29 @@ module.exports = function (app) {
         }
     }
 
-    /*
     controller.prototype.loadExchangeData = async () => {
-        const TABLE = 'Exchanges';
-        request.get(AIRTABLE_API + TABLE, (error, httpResponse, result) => {
-            const data = JSON.parse(result).Exchanges;
-            for (let i in data) {
-                if (!data[i].data) {
-                    continue;
-                }
-                const item = data[i].data.fields;
+        const url = AIRTABLE_API + "Exchanges";
+        let result = await _makeRequest("get", url);
+        const data = result.Exchanges;
 
-                if (!item.name) {
-                    continue;
-                }
-
-                const dataToSave = {
-                    name: item.name,
-                    data: JSON.stringify(item)
-                };
-
-                await electron.app.sqlLiteService.ExchangeDataHandler.create(dataToSave);
+        for (let i in data) {
+            if (!data[i].data) {
+                continue;
             }
-        });
+
+            const item = data[i].data.fields;
+
+            if (!item.name) {
+                continue;
+            }
+
+            const dataToSave = {
+                name: item.name,
+                data: JSON.stringify(item)
+            };
+            await electron.app.sqlLite.exchangeMarket.create(dataToSave);
+        }
     }
-    */
 
     /**
      *

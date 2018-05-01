@@ -92,9 +92,6 @@ function onReady(app) {
 
         electron.app.helpers = require('./controllers/helpers')(app);
 
-        const CMCService = require('./controllers/cmc-service')(app);
-        electron.app.cmcService = new CMCService();
-
         const SqlLiteService = require('./controllers/sql-lite-service')(app);
         electron.app.sqlLiteService = new SqlLiteService();
 
@@ -105,12 +102,14 @@ function onReady(app) {
         const AirtableService = require('./controllers/airtable-service')(app);
         electron.app.airtableService = new AirtableService();
 
-
         const RPCHandler = require('./controllers/rpc-handler')(app);
         electron.app.rpcHandler = new RPCHandler();
 
         const Etherscan = require('./controllers/etherscan')(app);
         electron.app.etherscan = new Etherscan();
+
+        const CMCService = require('./controllers/cmc-service')(app);
+        electron.app.cmcService = new CMCService();
 
 
 
@@ -171,6 +170,7 @@ function onReady(app) {
 
         app.win.on('closed', () => {
             log.info('app closed');
+            electron.app.cmcService.stopUpdater();
             app.win = null;
         });
 
@@ -190,28 +190,14 @@ function onReady(app) {
             app.win.webContents.send('APP_START_LOADING');
 
             let appSettings = await electron.app.sqlLite.appSetting.findById(1);
+
             await electron.app.airtableService.loadIdAttributeTypes();
+            await electron.app.airtableService.loadExchangeData();
+            await electron.app.cmcService.loadAndSavePrices();
+
+            electron.app.cmcService.startUpdater();
 
             app.win.webContents.send('APP_SUCCESS_LOADING', {appSettings: appSettings});
-
-            
-            /*
-
-            electron.app.sqlLiteService.init().then(async () => {
-                //start update cmc data
-                electron.app.cmcService.startUpdateData();
-                electron.app.airtableService.loadIdAttributeTypes();
-                electron.app.airtableService.loadExchangeData();
-
-                // start sync tx history
-                electron.app.etherscan.startSyncing();
-
-                app.win.webContents.send('APP_SUCCESS_LOADING');
-            }).catch((error) => {
-                log.error(error);
-                app.win.webContents.send('APP_FAILED_LOADING');
-            });
-            */
         });
 
         app.win.webContents.on('did-fail-load', () => {

@@ -54,6 +54,8 @@ module.exports = function () {
         scope.token = require('./models/token.js')(scope.knex);
         scope.walletToken = require('./models/wallet-token.js')(scope.knex);
         scope.actionLog = require('./models/action-log.js')(scope.knex);
-        scope.document = require('./models/document')(scope.knex);
+        scope.document = require('./models/document.js')(scope.knex);
+        scope.exchangeMarket = require('./models/exchange-market.js')(scope.knex);
+        scope.tokenPrice = require('./models/token-price.js')(scope.knex);
     }
 }

@@ -6,8 +6,8 @@ exports.up = function (knex, Promise) {
         table.integer('tokenId').notNullable().references('tokens.id');
         table.integer('balance').defaultTo(0);
         table.integer('recordState').defaultTo(1);
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
     });
 };
 

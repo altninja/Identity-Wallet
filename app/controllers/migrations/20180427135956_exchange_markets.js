@@ -3,8 +3,8 @@ exports.up = function (knex, Promise) {
     return knex.schema.createTable('exchange_markets', (table) => {
         table.string('name').primary();
         table.string('data').notNullable();
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
     });
 };
 

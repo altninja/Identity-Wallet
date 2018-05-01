@@ -11,8 +11,8 @@ exports.up = function (knex, Promise) {
         table.string('airDropCode');
         table.integer('lastRetrievedEthTxRecord').notNullable().defaultTo(0);
         table.integer('lastRetrievedTokenTxRecord').notNullable().defaultTo(0);
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
     });
 };
 

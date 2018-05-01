@@ -122,7 +122,7 @@ function SqlLiteService($rootScope, $log, $q, $interval, $timeout, RPCService, E
          * Load Exchange Data
          */
         loadExchangeData() {
-            return RPCService.makeCall('findAllExchangeData', null).then((data) => {
+            return RPCService.makeCall('exchangeMarket_findAll', null).then((data) => {
                 if (data && data.length) {
                     EXCHANGE_DATA = data;
                     $log.info("EXCHANGE_DATA", "LOADED", EXCHANGE_DATA);

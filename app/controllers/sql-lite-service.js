@@ -60,9 +60,6 @@ module.exports = function (app) {
     let ActionLog = require('./models/action-log.js')(app, controller);
     controller.prototype.ActionLog = ActionLog;
 
-    let ExchangeDataHandler = require('./models/exchange.js')(app, controller);
-    controller.prototype.ExchangeDataHandler = ExchangeDataHandler;
-
     let TokenPrice = require('./models/token-price.js')(app, controller);
     controller.prototype.TokenPrice = TokenPrice;
 
@@ -77,22 +74,6 @@ module.exports = function (app) {
      */
     controller.prototype.init = () => {
         let promises = [];
-
-
-        promises.push(Document.init());
-        promises.push(IdAttributeType.init());
-        promises.push(Token.init());
-        promises.push(Wallet.init());
-        promises.push(AppSetting.init());
-
-        promises.push(IdAttribute.init());
-        promises.push(TokenPrice.init());
-        promises.push(WalletToken.init());
-        promises.push(TransactionHistory.init());
-        promises.push(ActionLog.init());
-
-        promises.push(ExchangeDataHandler.init());
-
         return Promise.all(promises)
     }
 

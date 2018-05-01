@@ -10,8 +10,8 @@ exports.up = function (knex, Promise) {
             table.binary('icon');
             table.integer('isCustom').notNullable().defaultTo(0);
             table.integer('networkId').notNullable().defaultTo(1);
-            table.integer('createdAt').notNullable();
-            table.integer('updatedAt');
+            table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+            table.timestamp('updatedAt');
             table.unique(['symbol', 'networkId']);
         }).then(()=>{
             let promises = [];

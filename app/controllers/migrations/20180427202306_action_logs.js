@@ -4,8 +4,8 @@ exports.up = function (knex, Promise) {
         table.integer('walletId').notNullable().references('wallets.id');
         table.string('title');
         table.string('content');
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
     })
 };
 

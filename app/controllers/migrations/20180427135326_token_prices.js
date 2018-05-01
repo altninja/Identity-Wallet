@@ -1,15 +1,15 @@
 
 exports.up = function (knex, Promise) {
     return knex.schema.createTable('token_prices', (table) => {
-        table.increments('id');
-        table.string('symbol').notNullable().unique();
+        table.string('symbol').notNullable();
         table.string('name').notNullable();
-        table.string('source');
+        table.string('source').notNullable();
         table.decimal('priceInUSD');
         table.decimal('priceInBTC');
         table.decimal('priceInETH');
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
+        table.unique(['symbol', 'source']);
     });
 };
 

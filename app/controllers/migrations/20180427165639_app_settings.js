@@ -6,8 +6,8 @@ exports.up = function (knex, Promise) {
             table.integer('guideShown').defaultTo(0);
             table.integer('icoAdsShown').defaultTo(0);
             table.integer('termsAccepted').defaultTo(0);
-            table.integer('createdAt').notNullable();
-            table.integer('updatedAt');
+            table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+            table.timestamp('updatedAt');
         }).then((resp) => {
             let appSetting = {
                 id: 1,

@@ -6,8 +6,8 @@ exports.up = function (knex, Promise) {
         table.integer('idAttributeType').notNullable().references('id_attribute_types.key');
         table.text('items').notNullable().defaultTo("{}");
         table.integer('order').defaultTo(0);
-        table.integer('createdAt').notNullable();
-        table.integer('updatedAt');
+        table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+        table.timestamp('updatedAt');
         table.unique(['walletId', 'idAttributeType']);
     });
 };

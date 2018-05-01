@@ -9,8 +9,8 @@ exports.up = function (knex, Promise) {
             table.string('type').notNullable();
             table.string('entity').notNullable();
             table.integer('isInitial').defaultTo(0)
-            table.integer('createdAt').notNullable();
-            table.integer('updatedAt');
+            table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now());
+            table.timestamp('updatedAt');
         }).then(() => {
             let promises = [];
             for (let i in initialIdAttributeTypeList) {

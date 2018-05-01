@@ -1,53 +1,25 @@
 const ethTokensList = require('./../../../assets/data/eth-tokens.json');
 
+const electron = require('electron');
 const Promise = require('bluebird');
 
-module.exports = function (app, sqlLiteService) {
+module.exports = function (knex) {
     const TABLE_NAME = 'token_prices';
     const Controller = function () { };
-
-    let knex = sqlLiteService.knex;
+    const helpers = electron.app.helpers;
 
     /**
      *
      */
-    Controller.init = _init;
     Controller.findAll = _findAll;
     Controller.findBySymbol = _findBySymbol;
     Controller.add = _add;
     Controller.edit = _edit;
-
-
+    Controller.updatePrices = _updatePrices;
 
     /**
      *
      */
-    function _init() {
-        return new Promise((resolve, reject) => {
-            knex.schema.hasTable(TABLE_NAME).then((exists) => {
-                if (!exists) {
-                    knex.schema.createTable(TABLE_NAME, (table) => {
-                        table.increments('id');
-                        table.string('name').notNullable();
-                        table.string('symbol').notNullable().unique();
-                        table.string('source');
-                        table.decimal('priceUSD');
-                        table.decimal('priceBTC');
-                        table.decimal('priceETH');
-                        table.integer('createdAt').notNullable();
-                        table.integer('updatedAt');
-                    }).then((resp) => {
-                        resolve("Table: " + TABLE_NAME + " created.");
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
     function _findAll() {
         return new Promise((resolve, reject) => {
             knex(TABLE_NAME).select().then((rows) => {
@@ -68,12 +40,29 @@ module.exports = function (app, sqlLiteService) {
         });
     }
 
-    function _add (tokenPrice) {
+    function _add(tokenPrice) {
         return sqlLiteService.insertIntoTable(TABLE_NAME, tokenPrice);
     }
 
     function _edit(tokenPrice) {
         return sqlLiteService.updateById(TABLE_NAME, tokenPrice);
+    }
+
+    async function _updatePrices(source, symbol, name, priceInUSD, priceInBTC, priceInETH) {
+        let rows = await knex(TABLE_NAME).select().where({ symbol: symbol, source: source });
+        if (rows && rows.length) {
+            await knex(TABLE_NAME).update({ priceInUSD: priceInUSD, priceInBTC: priceInBTC, priceInETH: priceInETH, updatedAt: new Date().getTime() }).where({ symbol: symbol, source: source });
+        } else {
+            let item = {
+                name: name,
+                symbol: symbol,
+                source: 'https://coinmarketcap.com',
+                priceInUSD: priceInUSD,
+                priceInBTC: priceInBTC,
+                priceInETH: priceInETH
+            };
+            await knex(TABLE_NAME).insert(item);
+        }
     }
 
     return Controller;
