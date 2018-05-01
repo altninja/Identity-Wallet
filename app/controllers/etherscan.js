@@ -7,11 +7,17 @@ const config = require('../config');
 const request = require('request');
 const async = require('async');
 
+const Etherscan = require('etherscan');
+
+
 module.exports = function (app) {
     //"https://api.etherscan.io/api?module=account&action=txlist&address=0xddbd2b932c763ba5b1b7ae3b362eac3e8d40121a&startblock=0&endblock=99999999&offset=10&sort=asc"
 
+    const API_KEY = null;
     const REQUEST_INTERVAL_DELAY = 600; // millis
     const RECORDS_COUNT = 1000;
+
+    const etherscan = new Etherscan(API_KEY);
 
     let API_ENDPOINT = "https://api.etherscan.io/api?module=account";
 

@@ -1,14 +1,8 @@
 'use strict';
 
-const Promise = require('bluebird');
 const electron = require('electron');
-const path = require('path');
-const config = require('../config');
-const request = require('request');
-const async = require('async');
-
-const CoinMarketCap = require('coinmarketcap-api')
-const client = new CoinMarketCap()
+const CoinMarketCap = require('coinmarketcap-api');
+const client = new CoinMarketCap();
 
 module.exports = function (app) {
     const ITEMS_LIMIT = 3000;
