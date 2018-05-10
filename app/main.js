@@ -191,6 +191,8 @@ function onReady(app) {
 
             let appSettings = await electron.app.sqlLite.appSetting.findById(1);
 
+            await electron.app.etherscan.startSyncing();
+
             await electron.app.airtableService.loadIdAttributeTypes();
             await electron.app.airtableService.loadExchangeData();
             await electron.app.cmcService.loadAndSavePrices();
