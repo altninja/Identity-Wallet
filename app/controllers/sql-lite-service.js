@@ -66,7 +66,7 @@ module.exports = function (app) {
     let WalletToken = require('./models/wallet-token.js')(app, controller);
     controller.prototype.WalletToken = WalletToken;
 
-    let TransactionHistory = require('./models/transaction-history.js')(app, controller);
+    let TransactionHistory = require('./models/tx-history.js')(app, controller);
     controller.prototype.TransactionHistory = TransactionHistory;
 
     /**
