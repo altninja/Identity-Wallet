@@ -23,7 +23,7 @@ module.exports = function (app) {
 
     async function _loadAndSavePrices() {
         let list = await client.getTicker({ limit: ITEMS_LIMIT });
-        for (let item of list) {
+        for (let item in list.data) {
             if (intervalPromise === null) return;
             await electron.app.sqlLite.tokenPrice.updatePrices('https://coinmarketcap.com', item.symbol, item.name, +item.price_usd, +item.price_btc, +item.price_eth);
         }
