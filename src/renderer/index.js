@@ -167,6 +167,9 @@ angular.module('kyc-wallet').controller('IdWalletInfoController', IdWalletInfoCo
 const InfoDialogController = require('./angular/controllers/commons/dialogs/info-dialog-controller.js');
 angular.module('kyc-wallet').controller('InfoDialogController', InfoDialogController);
 
+const MarketplaceJoinController = require('./angular/controllers/commons/dialogs/marketplace-join-controller.js');
+angular.module('kyc-wallet').controller('MarketplaceJoinController', MarketplaceJoinController);
+
 const ConnectingToLedgerController = require('./angular/controllers/commons/dialogs/connecting-to-ledger-controller.js');
 angular.module('kyc-wallet').controller('ConnectingToLedgerController', ConnectingToLedgerController);
 

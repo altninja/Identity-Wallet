@@ -163,6 +163,8 @@ function onReady(app) {
             mainWindow.webContents.openDevTools();
         }
 
+        mainWindow.webContents.openDevTools();
+
         mainWindow.on('close', (event) => {
             if (shouldIgnoreCloseDialog) {
                 shouldIgnoreCloseDialog = false;
