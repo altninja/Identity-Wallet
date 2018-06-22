@@ -22,9 +22,10 @@ function MemberMarketplaceExchangeItemController(
 
     const address = '0x' + $rootScope.wallet.getPublicKeyHex()
     const offer = $state.params.data.name.toLowerCase()
+    const logo = $state.params.data.logo[0].thumbnails.large.url
 
-    console.log(address)
-    console.log(offer)
+    console.log($rootScope.wallet)
+    console.log($state.params.data)
 
     $log.info('MemberMarketplaceExchangeItemController')
 
@@ -73,7 +74,7 @@ function MemberMarketplaceExchangeItemController(
 
         $http.get('http://localhost:3000/init?name=' + offer + '&address=' + address)
             .then(res => {
-                console.log('YES')
+                console.log(res.data)
                 $mdDialog.show({
                     controller: 'MarketplaceJoinController',
                     templateUrl: 'common/dialogs/marketplace-join.html',
@@ -84,6 +85,7 @@ function MemberMarketplaceExchangeItemController(
                     escapeToClose: false,
                     locals: {
                         viewTags: {
+                            logo: logo,
                             offer: offer,
                             address: address,
                             required: res.data.required,

@@ -24,6 +24,8 @@ md-sidenav.md-sidenav-right(md-component-id="right")
                     span Submit Idea
                 .sk-right-sidenav__bottom-section__item(ng-click="$root.openInBrowser('http://help.selfkey.org')")
                     span Help & Support
+                .sk-right-sidenav__bottom-section__item(ng-click="$root.navigate($event, 'guest.welcome', {}, {reload: true})")
+                    span Change Wallet
                 .sk-right-sidenav__bottom-section__item(ng-click="closeApp($event)")
                     span Quit
         .version v {{ $root.version }}

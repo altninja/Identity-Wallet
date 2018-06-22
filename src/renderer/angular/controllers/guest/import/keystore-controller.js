@@ -52,7 +52,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
             if (wallets[selectedPublicKey]) {
                 let promise = unlockExistingWallet(selectedPublicKey, $scope.userInput.password);
                 promise.then((data) => {
-                    $state.go('member.dashboard.main');
+                    $state.go('member.dashboard.main', {}, {reload: true});
                 }).catch((error) => {
                     $scope.isAuthenticating = false;
                     $scope.incorrectPassword = true;
@@ -92,6 +92,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
      *
      */
     function unlockExistingWallet(publicKey, password) {
+        console.log('UEW')
         let defer = $q.defer();
 
         let unlockExistingWalletPromise = RPCService.makeCall('unlockKeystoreFile', {
@@ -100,6 +101,7 @@ function GuestImportKeystoreController($rootScope, $scope, $log, $q, $timeout, $
         });
 
         unlockExistingWalletPromise.then((data) => {
+            if ($rootScope.wallet) { $rootScope.wallet = {} }
             $rootScope.wallet = new Wallet(data.id, data.privateKey, data.publicKey, data.keystoreFilePath, data.profile);
 
             let initialPromises = [];

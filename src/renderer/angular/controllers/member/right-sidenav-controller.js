@@ -25,8 +25,8 @@ function MemberRightSidenavController($rootScope, $scope, $log, $mdSidenav, $sta
         $scope.close();
     }
 
-    $rootScope.navigate = ($event, state, params) => {
-        $state.go(state, params);
+    $rootScope.navigate = ($event, state, params, options) => {
+        $state.go(state, params, options);
         $scope.close();
     }
 };

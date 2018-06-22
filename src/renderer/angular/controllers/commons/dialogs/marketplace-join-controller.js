@@ -18,14 +18,15 @@ function MarketplaceJoinController(
         $mdDialog.cancel()
     }
 
-    $scope.redirect = () => {
-    	RPCService.makeCall('openBrowserWindow', { url: successUrl })
-    }
-
-    $scope.joinOffer = () => {
-        $http.post('http://localhost:3000/' + offer, payload)
+    $scope.joinOffer = (email, password) => {
+        const payload = {
+            email: email,
+            password: password
+        }
+        $http.post('http://localhost:3000/' + viewTags.offer, payload)
             .then(res => {
-                const successUrl = 'http://localhost:3001/success?name=' + offer
+                const successUrl = 'http://localhost:3001/success?name=' + viewTags.offer
+                RPCService.makeCall('openBrowserWindow', { url: successUrl })
             })
     }
 }
