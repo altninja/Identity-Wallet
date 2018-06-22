@@ -32,7 +32,7 @@
                                 span(ng-if='realData.description.length == strLimit')
                                     md-button(ng-click='showLess()')
                                         span View Less Details
-                            md-button.gray.status.default(ng-click="joinOffer(realData.name)") Join Offer
+                            md-button.gray.status.default(ng-click='checkOffer()') Join Offer
                 .section
                     .section-content
                         .title(style="font-weight: 600") Exchange Highlights

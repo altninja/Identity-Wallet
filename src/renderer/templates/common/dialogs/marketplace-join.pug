@@ -1,0 +1,19 @@
+md-dialog.generic-info-container(aira-label="{{viewTags.offer}}")
+    .info-wrapper
+        .info-title
+            span {{viewTags.offer}}
+            span.close(ng-click="cancel($event)") x
+        .info-body 
+            .header
+                .logo
+                    img.logo-image(ng-src="{{realData.logo[0].thumbnails.small.url}}", alt="")
+                    span.name(style="font-weight: 600") {{viewTags.offer}} (Exchange)
+            p Create a new account with {{viewTags.offer}}
+            h2 {{viewTags.offer}}
+            pre {{viewTags.required}}
+            pre {{viewTags.kycc}}
+            pre {{viewTags.password}}
+            pre {{viewTags.address}}
+
+        .sk-button.filled-blue.create-button(ng-click='joinOffer()')
+            span.primary Create Account
