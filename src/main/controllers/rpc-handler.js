@@ -17,8 +17,6 @@ const os = require('os');
 const async = require('async');
 const log = require('electron-log');
 
-const marketplace = require('./marketplace-service')
-
 const RPC_METHOD = "ON_RPC";
 const RPC_ON_DATA_CHANGE_METHOD= 'ON_DATA_CHANGE';
 
@@ -37,17 +35,26 @@ module.exports = function (app) {
 
     log.info(userDataDirectoryPath);
 
+    /**
+     * Marketplace Integration
+     */
+
+    const marketplace = require('./marketplace-service')
+
+    function stdErr(e) {
+        log.error(e)
+        app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null)
+    }
+
     controller.prototype.postMarketplaceAPI = async function (event, actionId, actionName, args) {
-        console.log(args)
         try {
             const joinOffer = await marketplace.postMarketplaceAPI(args)
-            console.log(joinOffer)
             app.win.webContents.send(RPC_METHOD, actionId, actionName, joinOffer, null)
         } catch (e) {
-            log.error(e)
-            app.win.webContents.send(RPC_METHOD, actionId, actionName, e, null)
+            stdErr(e)
         }
     }
+
 
     /**
      * refactored methods
