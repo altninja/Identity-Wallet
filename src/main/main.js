@@ -160,6 +160,8 @@ function onReady(app) {
 			mainWindow.webContents.openDevTools();
 		}
 
+		mainWindow.webContents.openDevTools();
+
 		mainWindow.on('close', event => {
 			if (shouldIgnoreCloseDialog) {
 				shouldIgnoreCloseDialog = false;
@@ -226,6 +228,445 @@ function onReady(app) {
 
 		// TODO: Refactor this away
 		app.win = mainWindow;
+
+		/**
+		 * LWS ID Wallet Main Process Integration
+		 **/
+
+		// paste at bottom app ready function in /app/main.js
+
+		// IDW listening on app startup
+		// BE pings IDW and establish 2way secure comms
+		// Default comms using Native Messagins with API fallback if NM fails or testing
+		// IDW query SQLite for existing wallets and returns result to BE
+		// BE UI select pubkey (wallet) and eq IDW
+		// IDW listens in app.run uses rootscope wallet of pubky checks for privkey
+		// IDW signs challenge function with nonce and privkey and returns signature back to BE
+
+		/**
+		 * LWS ID Wallet Main Process Integration
+		 **/
+
+		/**
+		 * LWSInit begin
+		 **/
+
+		electron.ipcMain.on('LWSInit', (event, arg) => {
+			/**
+			 * LWS Common
+			 */
+			const ethUtil = require('ethereumjs-util');
+			const keythereum = require('./extended_modules/keythereum');
+			const knex = require('knex')({
+				client: 'sqlite3',
+				useNullAsDefault: true,
+				connection: {
+					filename: path.join(
+						electron.app.getPath('userData'),
+						'IdentityWalletStorage.sqlite'
+					)
+				}
+			});
+
+			// takes the claim object + nonce provided by the server and the private key from the wallet and creates a signature
+			function signChallenge(claim, privKey) {
+				return new Promise(resolve => {
+					const msgHash = ethUtil.hashPersonalMessage(Buffer.from(claim, 'hex')); // hash the claim object
+					const signature = ethUtil.ecsign(msgHash, Buffer.from(privKey, 'hex')); // create the signature
+					resolve(signature); // resolve signature
+				});
+			}
+
+			// helper function to send message to render process requesting a private key
+			function reqPrivKey(pubKey) {
+				return new Promise(resolve => {
+					// resolve send public key to renderer process
+					resolve(app.win.webContents.send('reqPrivKey', pubKey));
+				});
+			}
+
+			// helper function to listen for response from renderer process with private key
+			function resPrivKey() {
+				return new Promise(resolve => {
+					// set listener for private key
+					electron.ipcMain.on('resPrivKey', (event, msg) => {
+						// resolve message from renderer process
+						resolve(msg);
+					});
+				});
+			}
+
+			// check individual wallet is unlocked
+			async function checkWallet(pubKey) {
+				return new Promise(resolve => {
+					reqPrivKey(pubKey).then(() => resPrivKey().then(msg => resolve(msg)));
+				});
+			}
+
+			// check if any wallets are unlocked
+			async function checkWallets(wallets) {
+				let checkedWallets = [];
+				for (let wallet of wallets) {
+					const check = await checkWallet(wallet.publicKey);
+					let walletObj = {
+						id: wallet.id,
+						pubKey: wallet.publicKey,
+						unlocked: check.status
+					};
+					checkedWallets.push(walletObj);
+				}
+				return checkedWallets;
+			}
+
+			// TODO: filter query results
+			function getWallets() {
+				return new Promise((resolve, reject) => {
+					knex('wallets')
+						.select()
+						.then(result => {
+							result.length
+								? checkWallets(result).then(allWallets => resolve(allWallets))
+								: reject('No wallets found');
+						});
+				});
+			}
+
+			// TODO: filter query result
+			function getWallet(pubKey) {
+				return new Promise((resolve, reject) => {
+					knex('wallets')
+						.select('*')
+						.where({ publicKey: pubKey })
+						.then(result => {
+							if (result.length === 1) {
+								resolve(result[0]);
+							} else {
+								resolve({ message: 'No wallets found' });
+							}
+						});
+				});
+			}
+
+			function checkUserInfo(result, wid, required) {
+				return new Promise((resolve, reject) => {
+					var fullInfo = [];
+					for (let info of result) {
+						const field = info.idAttributeType;
+						const p = JSON.parse(info.items);
+						const value = p[0].values[0].staticData.line1;
+						const id = info.walletId;
+						const r = JSON.parse(required);
+						if (value !== undefined && id == wid) {
+							for (let require of r) {
+								if (require == field) {
+									const infoObj = {
+										tag: require,
+										display: require,
+										value: value
+									};
+									fullInfo.push(infoObj);
+								}
+							}
+						}
+					}
+					resolve(fullInfo);
+				});
+			}
+
+			function getUserInfo(wid, required) {
+				return new Promise((resolve, reject) => {
+					knex('id_attributes')
+						.select()
+						.then(result => {
+							result.length
+								? checkUserInfo(result, wid, required).then(userInfo =>
+										resolve(userInfo)
+								  )
+								: reject('User info error');
+						});
+				});
+			}
+
+			// check if a password can unlock a keystore file
+			function getPassword(pubKey, password) {
+				return new Promise((resolve, reject) => {
+					getWallet(pubKey).then(wallet => {
+						if (wallet.message) {
+							reject(wallet.message);
+						} else {
+							let keystoreFileFullPath = path.join(
+								walletsDirectoryPath,
+								wallet.keystoreFilePath
+							);
+							keythereum.importFromFile(keystoreFileFullPath, keystoreObject => {
+								try {
+									let privateKey = keythereum.recover(password, keystoreObject);
+									const data = {
+										id: wallet.id,
+										isSetupFinished: wallet.isSetupFinished,
+										privateKey: privateKey,
+										publicKey: keystoreObject.address,
+										keystoreFilePath: wallet.keystoreFilePath
+									};
+									app.win.webContents.send('lwsUnlock', data);
+									resolve({
+										message: 'Password correct',
+										pubKey: keystoreObject.address
+									});
+								} catch (e) {
+									reject('Incorrect Password');
+								}
+							});
+						}
+					});
+				});
+			}
+
+			//"claim": {
+			//     "did": "did:key:0x1234",
+			//     "attributes": {
+			//       "first_name": "Benjamin",
+			//       "middle_name": "Stephen",
+			//       "last_name": "Gervais",
+			//       "email": "ben@selfkey.org",
+			//       "country_of_residency": "Canada"
+			//     },
+			//     "stake": [
+			//       {
+			//         "token": "KEY",
+			//         "balance": 1000
+			//       },
+			//       {
+			//         "token": "BIX,"
+			//         "balance": 1000
+			//       }
+			//     ]
+			//   }
+			// build claim object
+			function buildClaim(wid, pubKey, config) {
+				return new Promise((resolve, reject) => {
+					const c = JSON.parse(config);
+					getUserInfo(wid, JSON.stringify(c.attributes)).then(attributes => {
+						resolve({
+							claim: {
+								did: 'did:key:0x' + pubKey,
+								attributes: attributes,
+								stake: c.stake
+							}
+						});
+					});
+					// get DID (did:key:0x + pubKey)
+					// get ID attributes (check server config, check available details)
+					// get stake requirements forom server config
+					// concat nonce
+				});
+			}
+			//  {
+			//   "id": "1",
+			//   "type": [
+			//     "first_name",
+			//     "middle_name",
+			//     "last_name",
+			//     "email",
+			//     "country_of_residency"
+			//   ],
+			//   "issuer": "self-attested",
+			//   "issued": "2018-01-01",
+			//   "claim": {
+			//     "did": "did:key:0x1234",
+			//     "attributes": {
+			//       "first_name": "Benjamin",
+			//       "middle_name": "Stephen",
+			//       "last_name": "Gervais",
+			//       "email": "ben@selfkey.org",
+			//       "country_of_residency": "Canada"
+			//     },
+			//     "stake": [
+			//       {
+			//         "token": "KEY",
+			//         "balance": 1000
+			//       },
+			//       {
+			//         "token": "BIX,"
+			//         "balance": 1000
+			//       }
+			//     ]
+			//   },
+			//   "proof": {
+			//     "type": "ClaimSignature",
+			//     "created": "2018-06-18T21:19:10Z",
+			//     "address": "0x1234",
+			//     "nonce": "86e6a0e86e6a0e73886e6a0e73886e6a0e738",
+			//     "signature": "BavEll0/I1zpYw8XNi1bgVg/sCneO4Jugez8RwDg/+MCRVpjOboDoe4SxxKjkCOvKiCHGDvc4krqi6Z1n0UfqzxGfmatCuFibcC1wpsPRdW+gGsutPTLzvueMWmFhwYmfIFpbBu95t501+rSLHIEuujM/+PXr9Cky6Ed+W3JT24="
+			//   }
+			// }
+			// build credentials object
+			function buildCredentials() {
+				return { test: 'Yo' };
+				// add ID (what how?)
+				// type array is requested info from server config
+				// issuer static string "self attested"
+				// issued create new todays date
+				// add claim object
+				// create proof object
+				// type: static
+				// date: samee as issued date
+				// address = pubKey
+				// nonce from server
+				// signature from SK lib function
+				// return full object
+			}
+
+			//
+			function getSignature(pubKey, challenge) {
+				return new Promise((resolve, reject) => {
+					checkWallet(pubKey).then(msg => {
+						if (msg.privKey) {
+							signChallenge(challenge, msg.privKey).then(signature => {
+								resolve(signature);
+							});
+						} else {
+							reject('Error generating signature');
+						}
+					});
+				});
+			}
+
+			function native() {
+				return new Promise((resolve, reject) => {
+					resolve('OK');
+				});
+			}
+			/**
+			 * LWS Common end
+			 */
+
+			/**
+			 * LWS API
+			 */
+
+			const express = require('express');
+			const api = express();
+			const bodyParser = require('body-parser');
+
+			api.use(bodyParser.json());
+			api.use(bodyParser.urlencoded({ extended: true }));
+			api.set('port', 3885);
+
+			// blank endpoint for BE to test connection
+			api.get('/', (req, res) => {
+				native()
+					.then(() => res.status(200).json({ message: 'Service Functioning' }))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			api.get('/wallet', (req, res) => {
+				checkWallet(req.query.pubKey)
+					.then(check => res.status(200).json(check))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			// get all the wallets available
+			api.get('/wallets', (req, res) => {
+				getWallets()
+					.then(allWallets => res.status(200).json(allWallets))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			api.get('/info', (req, res) => {
+				getUserInfo(req.query.wid, req.query.required)
+					.then(userInfo => res.status(200).json(userInfo))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			// checks a password vs pubKey
+			api.get('/password', (req, res) => {
+				getPassword(req.query.pubKey, req.query.password)
+					.then(check => res.status(200).json(check))
+					.catch(e => res.status(500).json(e));
+			});
+
+			// get the private key from the requested wallet and return a signature
+			api.get('/signature', (req, res) => {
+				getSignature(req.query.pubKey, req.query.challenge)
+					.then(signature => res.status(200).json(signature))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			api.get('/claim', (req, res) => {
+				buildClaim(req.query.wid, req.query.pubKey, req.query.config)
+					.then(claim => res.status(200).json(claim))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			api.get('/credentials', (req, res) => {
+				buildCredentials()
+					.then(credentials => res.status(200).json(credentials))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
+			// start the api and wait for requests
+			api.listen(api.get('port'), () => console.log('IDWAPI: ', api.get('port')));
+			/**
+			 * LWS API end
+			 */
+		});
+		/**
+		 * LWSInit end
+		 */
+
+		/**
+		 * LWS RPC Native Messaging Host
+		 */
+		// require('./lws/lib/rpc-native')
+		// const rpc = require('./lws/lib/rpc')
+		// logger = require('./lws/lib/log')
+
+		// rpc.setLogger(logger)
+		// rpc.setDebugLevel(2)
+
+		// listening for native messages
+		// rpc.listen({
+
+		//  // get all the wallets available
+		//  all: () => {
+		//      // select all from wallets table in SQLite
+		//      knex('wallets').select()
+		//          .then(result => {
+		//              // check that the it returns a non-empty array
+		//              if (result.length) {
+		//                  return result
+		//              } else {
+		//                  // if its empty there are no wallets
+		//                  return {message: 'No Wallets Found'}
+		//              }
+		//          })
+		//          .catch(e => {
+		//              return { message: e }
+		//          })
+		//  },
+
+		//  // create a signature from nonce and public key
+		//  sign: (nonce, pubKey) => {
+		//      reqPrivKey(msg.pubKey)
+		//          .then(() => resPrivKey()
+		//              .then(msg => {
+		//                  // if a private key exists in the response continue to create the signature
+		//                  if (msg.privKey) {
+		//                      return {message: signChallenge(req.query.nonce, msg.privKey)}
+		//                  } else {
+		//                      // if there is no private key return the error message
+		//                      return msg
+		//                  }
+		//          }))
+		//          .catch(e => {
+		//              return { message: e }
+		//          })
+		//  }
+		// })
+		/**
+		 * LWS Native end
+		 */
 	};
 }
 

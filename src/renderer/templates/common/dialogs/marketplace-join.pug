@@ -3,14 +3,21 @@ md-dialog.id-wallet-info(aira-label="{{viewTags.offer}}")
         sk-icon(icon="close-dialog", size-class="icon-size-36x36", ng-click="cancel($event)")
         .container
             .header
-                span <img ng-src="{{viewTags.logo}}"> {{viewTags.offer}} (Exchange)
+                span Join Offer
             .info-section
+                span <h2><img ng-src="{{viewTags.logo}}"> {{viewTags.offer | uppercase}}</h2>
                 .text
-                    p Create a new account with {{viewTags.offer}}
-                    p {{viewTags.required}}
-                    p {{viewTags.address}}
-                    md-input-container.pr-40.sk-input-box.no-error-spacer.sk-field-error-tooltip-parent
+                    p Create a new user account and submit KYC verification using your SelfKey ID data and documents in one click for <strong>{{viewTags.offer | uppercase}}</strong>  (Exchange)
+                    h3 My Wallet Address : {{viewTags.address}}
+                    strong ** You need to add a unique password to create your new account **
+                    md-input-container.pr-40.sk-input-box.no-error-spacer.sk-field-error-tooltip-parent 
+                        label New Password
                         input(type="password", name="password", ng-style="{ 'display' : (viewTags.password) ? 'block' : 'none' }")
+                    h4 Required Data
+                    pre {{viewTags.required}}
+                    h4 My Data
+                    pre {{viewTags.fullWallet}}
+                   
             .buttons-section
                 md-button(ng-click="joinOffer()" ng-class="[{'button-300': dialogInfo.step == 2}]")
                     span Create Account

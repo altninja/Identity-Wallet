@@ -22,6 +22,10 @@ function MemberMarketplaceExchangeItemController(
 	const address = '0x' + $rootScope.wallet.getPublicKeyHex();
 	const offer = $state.params.data.name.toLowerCase();
 	const logo = $state.params.data.logo[0].thumbnails.large.url;
+	const fullWallet = $rootScope.wallet.idAttributes;
+
+	console.log($rootScope.wallet);
+	console.log(fullWallet);
 
 	$log.info('MemberMarketplaceExchangeItemController');
 
@@ -80,7 +84,8 @@ function MemberMarketplaceExchangeItemController(
 						address: address,
 						required: res.data.required,
 						password: res.data.password,
-						kycc: res.data.kycc
+						kycc: res.data.kycc,
+						fullWallet: fullWallet
 					}
 				}
 			});
