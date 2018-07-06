@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 function MemberMarketplaceExchangeItemController(
 	$rootScope,
@@ -15,45 +15,47 @@ function MemberMarketplaceExchangeItemController(
 	RPCService,
 	$http
 ) {
-	'ngInject';
+	'ngInject'
 
-	$scope.realData = $state.params.data;
+	$scope.realData = $state.params.data
 
-	const address = '0x' + $rootScope.wallet.getPublicKeyHex();
-	const offer = $state.params.data.name.toLowerCase();
-	const logo = $state.params.data.logo[0].thumbnails.large.url;
-	const fullWallet = $rootScope.wallet.idAttributes;
+	const address = '0x' + $rootScope.wallet.getPublicKeyHex()
+	const offer = $state.params.data.name.toLowerCase()
+	const logo = $state.params.data.logo[0].thumbnails.large.url
+	const fullWallet = $rootScope.wallet.idAttributes
 
-	console.log($rootScope.wallet);
-	console.log(fullWallet);
-
-	$log.info('MemberMarketplaceExchangeItemController');
+	$log.info('MemberMarketplaceExchangeItemController')
 
 	// Initial 300 characters will be displayed.
-	$scope.strLimit = 300;
+	$scope.strLimit = 300
 
 	$scope.toggle = () => {
-		$scope.realData.text = $filter('limitTo')($scope.realData.description, $scope.strLimit, 0);
-		$scope.realData.text = $sce.trustAsHtml($scope.realData.text);
-	};
+		$scope.realData.text = $filter('limitTo')($scope.realData.description, $scope.strLimit, 0)
+		$scope.realData.text = $sce.trustAsHtml($scope.realData.text)
+	}
 
-	$scope.toggle();
+	$scope.toggle()
 
 	// Event trigger on click of the Show more button.
 	$scope.showMore = () => {
-		$scope.strLimit = $scope.realData.description.length;
-		$scope.toggle();
-	};
+		$scope.strLimit = $scope.realData.description.length
+		$scope.toggle()
+	}
 
 	// Event trigger on click on the Show less button.
 	$scope.showLess = () => {
-		$scope.strLimit = 300;
-		$scope.toggle();
-	};
+		$scope.strLimit = 300
+		$scope.toggle()
+	}
 
 	$scope.isInKycFields = item => {
-		return ($scope.realData ? $scope.realData['kyc_template'] || [] : []).indexOf(item) > -1;
-	};
+		return ($scope.realData ? $scope.realData['kyc_template'] || [] : []).indexOf(item) > -1
+	}
+
+	$http.get('http://localhost:3000/staking/verify?address=' + address).then(staked => {
+		$scope.stakingStatus = staked.data.staked
+		$scope.stakingAmount = staked.data.amount
+	})
 
 	$scope.checkOffer = () => {
 		// check staking status of wallet
@@ -88,9 +90,9 @@ function MemberMarketplaceExchangeItemController(
 						fullWallet: fullWallet
 					}
 				}
-			});
-		});
-	};
+			})
+		})
+	}
 }
 
 MemberMarketplaceExchangeItemController.$inject = [
@@ -107,6 +109,6 @@ MemberMarketplaceExchangeItemController.$inject = [
 	'CommonService',
 	'RPCService',
 	'$http'
-];
+]
 
-module.exports = MemberMarketplaceExchangeItemController;
+module.exports = MemberMarketplaceExchangeItemController

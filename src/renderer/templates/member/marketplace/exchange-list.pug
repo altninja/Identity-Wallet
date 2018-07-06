@@ -17,7 +17,7 @@
                         </div>
 
                 span :
-                    .coming-soon Coming soon
+                    .coming-soon {{stakingStatus}} | {{stakingAmount}} KEY
         .body-wrapper
             ul
                 li(ng-repeat='item in exchangesList')

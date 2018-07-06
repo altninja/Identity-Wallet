@@ -1,2 +1,7 @@
 *.json
-README.md 
+README.md
+
+src/main/controllers/marketplace-service.js
+src/renderer/angular/controllers/commons/dialogs/marketplace-join-controller.js
+src/renderer/angular/controllers/member/marketplace/exchange-item-controller.js
+src/renderer/angular/controllers/member/marketplace/exchange-list-controller.js

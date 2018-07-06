@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 function MemberMarketplaceExchangeListController(
 	$rootScope,
@@ -9,23 +9,32 @@ function MemberMarketplaceExchangeListController(
 	$mdPanel,
 	SqlLiteService,
 	$sce,
-	$filter
+	$filter,
+	$http
 ) {
-	'ngInject';
+	'ngInject'
 
-	$log.info('MemberMarketplaceMainController', SqlLiteService.getExchangeData());
+	$log.info('MemberMarketplaceMainController', SqlLiteService.getExchangeData())
 
 	SqlLiteService.loadExchangeData().then(() => {
-		$scope.exchangesList = SqlLiteService.getExchangeData();
+		$scope.exchangesList = SqlLiteService.getExchangeData()
 
 		angular.forEach($scope.exchangesList, item => {
 			if (item.data && item.data.description) {
-				item.content = $filter('limitTo')(item.data.description, 150, 0);
-				item.content = $sce.trustAsHtml(item.content);
+				item.content = $filter('limitTo')(item.data.description, 150, 0)
+				item.content = $sce.trustAsHtml(item.content)
 			}
-		});
-	});
+		})
+	})
+
+	const address = '0x' + $rootScope.wallet.getPublicKeyHex()
+	$http.get('http://localhost:3000/staking/verify?address=' + address).then(staked => {
+		$scope.stakingStatus = staked.data.staked
+		$scope.stakingAmount = staked.data.amount
+	})
+
 }
+
 MemberMarketplaceExchangeListController.$inject = [
 	'$rootScope',
 	'$scope',
@@ -35,6 +44,8 @@ MemberMarketplaceExchangeListController.$inject = [
 	'$mdPanel',
 	'SqlLiteService',
 	'$sce',
-	'$filter'
-];
-module.exports = MemberMarketplaceExchangeListController;
+	'$filter',
+	'$http'
+]
+
+module.exports = MemberMarketplaceExchangeListController

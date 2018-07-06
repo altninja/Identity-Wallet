@@ -12,7 +12,7 @@ md-dialog.id-wallet-info(aira-label="{{viewTags.offer}}")
                     strong ** You need to add a unique password to create your new account **
                     md-input-container.pr-40.sk-input-box.no-error-spacer.sk-field-error-tooltip-parent 
                         label New Password
-                        input(type="password", name="password", ng-style="{ 'display' : (viewTags.password) ? 'block' : 'none' }")
+                        input(type="password", name="password", ng-model="marketplace.password" ng-style="{ 'display' : (viewTags.password) ? 'block' : 'none' }")
                     h4 Required Data
                     pre {{viewTags.required}}
                     h4 My Data

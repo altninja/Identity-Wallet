@@ -1,20 +1,16 @@
-'use strict';
+'use strict'
 
-const path = require('path');
-const electron = require('electron');
-const log = require('electron-log');
-const request = require('request');
-const fs = require('fs');
+const path = require('path')
+const electron = require('electron')
+const log = require('electron-log')
+const request = require('request')
+const fs = require('fs')
 
-const docs = path.resolve(electron.app.getPath('userData'), 'documents');
+const docs = path.resolve(electron.app.getPath('userData'), 'documents')
 
 async function postMarketplaceAPI(args) {
-	// electron.app.sqlLiteService.Document.findById(args.documentId)
 	try {
-		console.log('YESYESYALL');
-		console.log(docs);
-		console.log(args);
-		const f = args.form;
+		const f = args.form
 		const form = {
 			email: f.email,
 			password: f.password,
@@ -34,7 +30,7 @@ async function postMarketplaceAPI(args) {
 			document_number: f.document_number,
 			issuing_country: f.issuing_country,
 			mime_type: f.mime_type
-		};
+		}
 		const options = {
 			url: args.options.url,
 			method: args.options.method,
@@ -42,21 +38,21 @@ async function postMarketplaceAPI(args) {
 				'Content-Type': 'multipart/form-data'
 			},
 			formData: form
-		};
-		console.log(options);
+		}
+		console.log(options)
 		request.post(options, (err, res, body) => {
-			if (err) return 'Error: ' + err;
+			if (err) return 'Error: ' + err
 			if (res.statusCode === 201) {
-				return 'Offer Joined Successfully';
+				return 'Offer Joined Successfully'
 			} else {
-				return 'HTTP Error: ' + res.statusCode;
+				return 'HTTP Error: ' + res.statusCode
 			}
-		});
+		})
 	} catch (e) {
-		return 'error' + e;
+		return 'error' + e
 	}
 }
 
 module.exports = {
 	postMarketplaceAPI
-};
+}
