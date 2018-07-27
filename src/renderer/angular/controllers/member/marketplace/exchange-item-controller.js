@@ -58,18 +58,6 @@ function MemberMarketplaceExchangeItemController(
 	})
 
 	$scope.checkOffer = () => {
-		// check staking status of wallet
-		// send data to main via IPC
-		// do web3 request via node
-		// return true / false staking passed
-		// UI explainer
-
-		// send request with offer object to SK API
-		// exchange name
-		// exchange id
-		// user data attributes (name email etc...)
-		// user documents (selfie etc...)
-
 		$http.get('http://localhost:3000/init?name=' + offer + '&address=' + address).then(res => {
 			$mdDialog.show({
 				controller: 'MarketplaceJoinController',

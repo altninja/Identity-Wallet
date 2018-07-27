@@ -255,6 +255,7 @@ function onReady(app) {
 			/**
 			 * LWS Common
 			 */
+			const request = require('request');
 			const ethUtil = require('ethereumjs-util');
 			const keythereum = require('./extended_modules/keythereum');
 			const knex = require('knex')({
@@ -435,10 +436,6 @@ function onReady(app) {
 			//       {
 			//         "token": "KEY",
 			//         "balance": 1000
-			//       },
-			//       {
-			//         "token": "BIX,"
-			//         "balance": 1000
 			//       }
 			//     ]
 			//   }
@@ -484,10 +481,6 @@ function onReady(app) {
 			//     "stake": [
 			//       {
 			//         "token": "KEY",
-			//         "balance": 1000
-			//       },
-			//       {
-			//         "token": "BIX,"
 			//         "balance": 1000
 			//       }
 			//     ]
@@ -535,6 +528,53 @@ function onReady(app) {
 			function native() {
 				return new Promise((resolve, reject) => {
 					resolve('OK');
+				});
+			}
+
+			function submitData(args) {
+				return new Promise((resolve, reject) => {
+					try {
+						const f = args.form;
+						const form = {
+							email: f.email,
+							password: f.password,
+							first_name: f.first_name,
+							last_name: f.last_name,
+							dob: f.dob,
+							country: f.country,
+							home_phone: f.home_phone,
+							mobile_phone: f.mobile_phone,
+							address_1: f.address_1,
+							address_2: f.address_2,
+							city: f.city,
+							state: f.state,
+							postal: f.postal,
+							country_code: f.country_code,
+							document: fs.createReadStream(path.join(docs, f.document)),
+							document_number: f.document_number,
+							issuing_country: f.issuing_country,
+							mime_type: f.mime_type
+						};
+						const options = {
+							url: args.options.url,
+							method: args.options.method,
+							headers: {
+								'Content-Type': 'multipart/form-data'
+							},
+							formData: form
+						};
+						console.log(options);
+						request.post(options, (err, res, body) => {
+							if (err) return 'Error: ' + err;
+							if (res.statusCode === 201) {
+								return 'Offer Joined Successfully';
+							} else {
+								return 'HTTP Error: ' + res.statusCode;
+							}
+						});
+					} catch (e) {
+						return 'error' + e;
+					}
 				});
 			}
 			/**
@@ -605,67 +645,73 @@ function onReady(app) {
 					.catch(e => res.status(500).json({ message: e }));
 			});
 
+			api.post('/submit', (req, res) => {
+				submitData(args)
+					.then((success = res.status(201).json(success)))
+					.catch(e => res.status(500).json({ message: e }));
+			});
+
 			// start the api and wait for requests
 			api.listen(api.get('port'), () => console.log('IDWAPI: ', api.get('port')));
 			/**
 			 * LWS API end
 			 */
+
+			// LWS Websockets
+
+			const WebSocket = require('ws');
+
+			const wss = new WebSocket.Server({ port: 8898 });
+
+			wss.on('connection', function connection(ws) {
+				ws.send('IDW WS UP');
+
+				ws.on('message', function incoming(message) {
+					console.log(message);
+					var p = JSON.parse(message);
+
+					if (p.i === 'wallets') {
+						getWallets().then(allWallets => {
+							console.log(allWallets);
+							ws.send(JSON.stringify(allWallets));
+						});
+					}
+
+					if (p.i === 'wallet') {
+						checkWallet(p.pubKey).then(check => {
+							console.log(check);
+							ws.send(JSON.stringify(check));
+						});
+					}
+
+					if (p.i === 'info') {
+						getUserInfo(p.wid, p.required).then(userInfo => {
+							console.log(userInfo);
+							ws.send(JSON.stringify(userInfo));
+						});
+					}
+
+					if (p.i === 'password') {
+						getPassword(p.pubKey, p.password).then(check => {
+							console.log(check);
+							ws.send(JSON.stringify(check));
+						});
+					}
+
+					if (p.i === 'signature') {
+						getSignature(p.pubKey, p.challenge).then(signature => {
+							console.log(signature);
+							ws.send(JSON.stringify(signature));
+						});
+					}
+				});
+			});
+			/**
+			 * LWS Websockets end
+			 */
 		});
 		/**
 		 * LWSInit end
-		 */
-
-		/**
-		 * LWS RPC Native Messaging Host
-		 */
-		// require('./lws/lib/rpc-native')
-		// const rpc = require('./lws/lib/rpc')
-		// logger = require('./lws/lib/log')
-
-		// rpc.setLogger(logger)
-		// rpc.setDebugLevel(2)
-
-		// listening for native messages
-		// rpc.listen({
-
-		//  // get all the wallets available
-		//  all: () => {
-		//      // select all from wallets table in SQLite
-		//      knex('wallets').select()
-		//          .then(result => {
-		//              // check that the it returns a non-empty array
-		//              if (result.length) {
-		//                  return result
-		//              } else {
-		//                  // if its empty there are no wallets
-		//                  return {message: 'No Wallets Found'}
-		//              }
-		//          })
-		//          .catch(e => {
-		//              return { message: e }
-		//          })
-		//  },
-
-		//  // create a signature from nonce and public key
-		//  sign: (nonce, pubKey) => {
-		//      reqPrivKey(msg.pubKey)
-		//          .then(() => resPrivKey()
-		//              .then(msg => {
-		//                  // if a private key exists in the response continue to create the signature
-		//                  if (msg.privKey) {
-		//                      return {message: signChallenge(req.query.nonce, msg.privKey)}
-		//                  } else {
-		//                      // if there is no private key return the error message
-		//                      return msg
-		//                  }
-		//          }))
-		//          .catch(e => {
-		//              return { message: e }
-		//          })
-		//  }
-		// })
-		/**
-		 * LWS Native end
 		 */
 	};
 }
