@@ -511,11 +511,11 @@ function onReady(app) {
 			}
 
 			//
-			function getSignature(pubKey, challenge) {
+			function getSignature(pubKey, nonce) {
 				return new Promise((resolve, reject) => {
 					checkWallet(pubKey).then(msg => {
 						if (msg.privKey) {
-							signChallenge(challenge, msg.privKey).then(signature => {
+							signChallenge(nonce, msg.privKey).then(signature => {
 								resolve(signature);
 							});
 						} else {
@@ -660,18 +660,30 @@ function onReady(app) {
 			// LWS Websockets
 
 			const WebSocket = require('ws');
+			const util = require('util');
 
 			const wss = new WebSocket.Server({ port: 8898 });
 
 			wss.on('connection', function connection(ws) {
-				ws.send('IDW WS UP');
+				console.log('WS UP 1');
+				// ws.send('WS UP 1');
 
 				ws.on('message', function incoming(message) {
-					console.log(message);
+					console.log('WS GOT MSG 2');
+					console.log(util.inspect(message, false, null));
+
 					var p = JSON.parse(message);
+					console.log('WS MSG OBJECT 3');
+					console.log(p);
+
+					if (p.i === 'connect') {
+						console.log('WS CONNECT 4');
+						// ws.send('WS CONNECT 4')
+					}
 
 					if (p.i === 'wallets') {
 						getWallets().then(allWallets => {
+							console.log('ALL WALLETS');
 							console.log(allWallets);
 							ws.send(JSON.stringify(allWallets));
 						});
@@ -679,13 +691,19 @@ function onReady(app) {
 
 					if (p.i === 'wallet') {
 						checkWallet(p.pubKey).then(check => {
+							console.log('SINGLE WALLET');
 							console.log(check);
-							ws.send(JSON.stringify(check));
+							var singleWallet = {
+								pubKey: check.pubKey,
+								status: check.status
+							};
+							ws.send(JSON.stringify(singleWallet));
 						});
 					}
 
 					if (p.i === 'info') {
 						getUserInfo(p.wid, p.required).then(userInfo => {
+							console.log('USER INFO');
 							console.log(userInfo);
 							ws.send(JSON.stringify(userInfo));
 						});
@@ -693,13 +711,15 @@ function onReady(app) {
 
 					if (p.i === 'password') {
 						getPassword(p.pubKey, p.password).then(check => {
+							console.log('KEYSTORE PASSWORD');
 							console.log(check);
 							ws.send(JSON.stringify(check));
 						});
 					}
 
 					if (p.i === 'signature') {
-						getSignature(p.pubKey, p.challenge).then(signature => {
+						getSignature(p.pubKey, p.nonce).then(signature => {
+							console.log('CREATE SIGNATURE');
 							console.log(signature);
 							ws.send(JSON.stringify(signature));
 						});
